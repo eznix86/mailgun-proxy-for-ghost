@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Providers;
 
 use App\Actions\Fortify\CreateNewUser;
@@ -69,7 +71,7 @@ class FortifyServiceProvider extends ServiceProvider
 
         Fortify::registerView(fn () => Registration::available()
             ? Inertia::render('auth/register')
-            : redirect()->route('login'));
+            : to_route('login'));
 
         Fortify::twoFactorChallengeView(fn () => Inertia::render('auth/two-factor-challenge'));
 
