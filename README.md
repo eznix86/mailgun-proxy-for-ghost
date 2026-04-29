@@ -2,7 +2,7 @@
 
 This is Mailgun-compatible proxy built specifically for Ghost newsletters. Ghost sends newsletter mail through the proxy as if it were Mailgun; the proxy sends through Laravel and exposes Mailgun-shaped events back to Ghost analytics.
 
-# Supported Providers
+## Supported Providers
 
 - SMTP
 - Sendmail
