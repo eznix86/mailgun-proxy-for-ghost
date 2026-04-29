@@ -3,16 +3,11 @@ name: linter
 on:
   push:
     branches:
-      - develop
       - main
-      - master
-      - workos
   pull_request:
     branches:
-      - develop
       - main
-      - master
-      - workos
+
 
 permissions:
   contents: write
@@ -26,7 +21,7 @@ jobs:
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.4'
+          php-version: '8.5'
 
       - name: Install Dependencies
         run: |
