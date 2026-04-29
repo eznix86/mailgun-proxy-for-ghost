@@ -43,8 +43,18 @@ test('mailgun events route accepts valid basic auth with optional page', functio
 });
 
 test('resend webhook route rejects unsigned requests', function () {
+    config()->set('services.resend.webhook_secret', 'whsec_'.base64_encode('test-secret'));
+    config()->set('services.resend.key', 'test-resend-key');
+
     $this->postJson(route('webhooks.resend'))
         ->assertUnauthorized();
+});
+
+test('resend webhook route requires configured webhook secret', function () {
+    config()->set('services.resend.webhook_secret', null);
+
+    $this->postJson(route('webhooks.resend'))
+        ->assertServiceUnavailable();
 });
 
 test('mailgun v3 routes render validation exceptions as 400 json', function () {
