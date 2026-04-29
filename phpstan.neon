@@ -1,0 +1,10 @@
+includes:
+    - vendor/larastan/larastan/extension.neon
+    - vendor/nesbot/carbon/extension.neon
+    - vendor/mrpunyapal/peststan/extension.neon
+
+parameters:
+    paths:
+        - app/
+        - tests/
+    level: 5
