@@ -1,6 +1,6 @@
-# Newsletter Laravel Proxy for Ghost
+# Mailgun Proxy for Ghost
 
-This Laravel app is a Mailgun-compatible proxy built specifically for Ghost newsletters. Ghost sends newsletter mail through the proxy as if it were Mailgun; the proxy sends through Laravel mail/Resend and exposes Mailgun-shaped events back to Ghost analytics.
+This is Mailgun-compatible proxy built specifically for Ghost newsletters. Ghost sends newsletter mail through the proxy as if it were Mailgun; the proxy sends through Laravel and exposes Mailgun-shaped events back to Ghost analytics.
 
 ## What it does
 
