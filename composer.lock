@@ -8117,6 +8117,68 @@
             "time": "2026-04-16T10:02:43+00:00"
         },
         {
+            "name": "laravel/agent-detector",
+            "version": "v2.0.1",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/laravel/agent-detector.git",
+                "reference": "fb26cb3e857ee972971f18176405084e64dfef5e"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/laravel/agent-detector/zipball/fb26cb3e857ee972971f18176405084e64dfef5e",
+                "reference": "fb26cb3e857ee972971f18176405084e64dfef5e",
+                "shasum": ""
+            },
+            "require": {
+                "php": "^8.2.0"
+            },
+            "require-dev": {
+                "laravel/pint": "^1.24.0",
+                "pestphp/pest": "^3.8.5|^4.1.0",
+                "pestphp/pest-plugin-type-coverage": "^3.0|^4.0.2",
+                "phpstan/phpstan": "^2.1.26",
+                "rector/rector": "^2.1.7",
+                "symfony/var-dumper": "^7.3.3"
+            },
+            "type": "library",
+            "autoload": {
+                "files": [
+                    "src/functions.php"
+                ],
+                "psr-4": {
+                    "Laravel\\AgentDetector\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Taylor Otwell",
+                    "email": "taylor@laravel.com"
+                }
+            ],
+            "description": "Detect if code is running in an AI agent or automated development environment",
+            "homepage": "https://github.com/laravel/agent-detector",
+            "keywords": [
+                "Agent",
+                "ai",
+                "automation",
+                "claude",
+                "cursor",
+                "detection",
+                "devin",
+                "php"
+            ],
+            "support": {
+                "issues": "https://github.com/laravel/agent-detector/issues",
+                "source": "https://github.com/laravel/agent-detector"
+            },
+            "time": "2026-04-28T13:38:41+00:00"
+        },
+        {
             "name": "laravel/boost",
             "version": "v2.4.5",
             "source": {
@@ -8899,27 +8961,27 @@
         },
         {
             "name": "nunomaduro/pao",
-            "version": "v1.0.5",
+            "version": "v1.0.6",
             "source": {
                 "type": "git",
-                "url": "https://github.com/nunomaduro/pao.git",
-                "reference": "4e2865b711ce4b220ff13612f991c486f5b0c8ec"
+                "url": "https://github.com/laravel/pao.git",
+                "reference": "02f62a64c2b60af44a418ee490fee193590d8269"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/nunomaduro/pao/zipball/4e2865b711ce4b220ff13612f991c486f5b0c8ec",
-                "reference": "4e2865b711ce4b220ff13612f991c486f5b0c8ec",
+                "url": "https://api.github.com/repos/laravel/pao/zipball/02f62a64c2b60af44a418ee490fee193590d8269",
+                "reference": "02f62a64c2b60af44a418ee490fee193590d8269",
                 "shasum": ""
             },
             "require": {
-                "php": "^8.3",
-                "shipfastlabs/agent-detector": "^1.1.4"
+                "laravel/agent-detector": "^2.0.0",
+                "php": "^8.3"
             },
             "conflict": {
-                "laravel/framework": "<12.0",
+                "laravel/framework": "<12.0.0",
                 "nunomaduro/collision": "<8.9.3",
-                "pestphp/pest": "<4.6.3 || >=6.0",
-                "phpunit/phpunit": "<12.5.23 || >=13.0.0 <13.1.7 || >=14.0"
+                "pestphp/pest": "<4.6.3 || >=6.0.0",
+                "phpunit/phpunit": "<12.5.23 || >=13.0.0 <13.1.7 || >=14.0.0"
             },
             "require-dev": {
                 "brianium/paratest": "^7.20.0",
@@ -8936,12 +8998,12 @@
             "extra": {
                 "pest": {
                     "plugins": [
-                        "Pao\\Drivers\\Pest\\Plugin"
+                        "Laravel\\Pao\\Drivers\\Pest\\Plugin"
                     ]
                 },
                 "laravel": {
                     "providers": [
-                        "Pao\\Laravel\\ServiceProvider"
+                        "Laravel\\Pao\\Laravel\\ServiceProvider"
                     ]
                 }
             },
@@ -8950,7 +9012,7 @@
                     "src/Autoload.php"
                 ],
                 "psr-4": {
-                    "Pao\\": "src/"
+                    "Laravel\\Pao\\": "src/"
                 }
             },
             "notification-url": "https://packagist.org/downloads/",
@@ -8959,16 +9021,16 @@
             ],
             "authors": [
                 {
-                    "name": "Nuno Maduro",
-                    "email": "enunomaduro@gmail.com"
+                    "name": "Taylor Otwell",
+                    "email": "taylor@laravel.com"
                 }
             ],
             "description": "Agent-optimized output for PHP testing tools",
             "keywords": [
                 "Agent",
                 "PHPStan",
+                "ai",
                 "dev",
-                "json",
                 "paratest",
                 "pest",
                 "php",
@@ -8976,24 +9038,11 @@
                 "testing"
             ],
             "support": {
-                "issues": "https://github.com/nunomaduro/pao/issues",
-                "source": "https://github.com/nunomaduro/pao/tree/v1.0.5"
+                "issues": "https://github.com/laravel/pao/issues",
+                "source": "https://github.com/laravel/pao"
             },
-            "funding": [
-                {
-                    "url": "https://www.paypal.com/paypalme/enunomaduro",
-                    "type": "custom"
-                },
-                {
-                    "url": "https://github.com/nunomaduro",
-                    "type": "github"
-                },
-                {
-                    "url": "https://www.patreon.com/nunomaduro",
-                    "type": "patreon"
-                }
-            ],
-            "time": "2026-04-27T09:30:41+00:00"
+            "abandoned": "laravel/pao",
+            "time": "2026-04-27T22:37:26+00:00"
         },
         {
             "name": "pestphp/pest",
@@ -11262,73 +11311,6 @@
                 }
             ],
             "time": "2025-02-07T05:00:38+00:00"
-        },
-        {
-            "name": "shipfastlabs/agent-detector",
-            "version": "v1.1.4",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/laravel/agent-detector.git",
-                "reference": "7719ba7ebbed18911494467139c389549ed53467"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/laravel/agent-detector/zipball/7719ba7ebbed18911494467139c389549ed53467",
-                "reference": "7719ba7ebbed18911494467139c389549ed53467",
-                "shasum": ""
-            },
-            "require": {
-                "php": "^8.2.0"
-            },
-            "require-dev": {
-                "laravel/pint": "^1.24.0",
-                "pestphp/pest": "^3.8.5|^4.1.0",
-                "pestphp/pest-plugin-type-coverage": "^3.0|^4.0.2",
-                "phpstan/phpstan": "^2.1.26",
-                "rector/rector": "^2.1.7",
-                "symfony/var-dumper": "^7.3.3"
-            },
-            "type": "library",
-            "autoload": {
-                "files": [
-                    "src/functions.php"
-                ],
-                "psr-4": {
-                    "AgentDetector\\": "src/"
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "Pushpak Chahjed",
-                    "email": "pushpak1300@gmail.com"
-                }
-            ],
-            "description": "Detect if code is running in an AI agent or automated development environment",
-            "keywords": [
-                "Agent",
-                "ai",
-                "automation",
-                "claude",
-                "cursor",
-                "detection",
-                "devin",
-                "php"
-            ],
-            "support": {
-                "issues": "https://github.com/laravel/agent-detector/issues",
-                "source": "https://github.com/laravel/agent-detector/tree/v1.1.4"
-            },
-            "funding": [
-                {
-                    "url": "https://github.com/pushpak1300",
-                    "type": "github"
-                }
-            ],
-            "time": "2026-04-26T17:43:21+00:00"
         },
         {
             "name": "staabm/side-effects-detector",
