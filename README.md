@@ -2,6 +2,16 @@
 
 This is Mailgun-compatible proxy built specifically for Ghost newsletters. Ghost sends newsletter mail through the proxy as if it were Mailgun; the proxy sends through Laravel and exposes Mailgun-shaped events back to Ghost analytics.
 
+# Supported Providers
+
+- SMTP
+- Sendmail
+- Postmark
+- Amazon SES
+- Resend
+- [Mailbox](https://github.com/RedberryProducts/mailbox-for-laravel) (faking a mailbox without sending it for real, great for local testing)
+- And more if you install other packages by the community
+
 ## What it does
 
 - Accepts Ghost's Mailgun `POST /v3/{domain}/messages` requests.
