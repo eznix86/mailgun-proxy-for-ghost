@@ -7,13 +7,14 @@ import {
 } from '@/components/ui/dropdown-menu';
 import {
     SidebarMenu,
-    SidebarMenuButton,
     SidebarMenuItem,
+    sidebarMenuButtonVariants,
     useSidebar,
 } from '@/components/ui/sidebar';
 import { UserInfo } from '@/components/user-info';
 import { UserMenuContent } from '@/components/user-menu-content';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { cn } from '@/lib/utils';
 
 export function NavUser() {
     const { auth } = usePage().props;
@@ -29,17 +30,23 @@ export function NavUser() {
             <SidebarMenuItem>
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                        <SidebarMenuButton
-                            size="lg"
-                            className="group text-sidebar-accent-foreground data-[state=open]:bg-sidebar-accent"
+                        <button
+                            type="button"
+                            className={cn(
+                                sidebarMenuButtonVariants({ size: 'lg' }),
+                                'group text-sidebar-accent-foreground data-[popup-open]:bg-sidebar-accent data-open:bg-sidebar-accent',
+                            )}
+                            data-sidebar="menu-button"
+                            data-slot="sidebar-menu-button"
+                            data-size="lg"
                             data-test="sidebar-menu-button"
                         >
                             <UserInfo user={auth.user} />
                             <ChevronsUpDown className="ml-auto size-4" />
-                        </SidebarMenuButton>
+                        </button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent
-                        className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg"
+                        className="w-(--anchor-width) min-w-56 rounded-lg"
                         align="end"
                         side={
                             isMobile
