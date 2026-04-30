@@ -1,7 +1,7 @@
 import { Link } from '@inertiajs/react';
 import type { PropsWithChildren } from 'react';
 import Heading from '@/components/heading';
-import { Button } from '@/components/ui/button';
+import { buttonVariants } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { useCurrentUrl } from '@/hooks/use-current-url';
 import { cn, toUrl } from '@/lib/utils';
@@ -45,22 +45,25 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
                         aria-label="Settings"
                     >
                         {sidebarNavItems.map((item, index) => (
-                            <Button
+                            <Link
                                 key={`${toUrl(item.href)}-${index}`}
-                                size="sm"
-                                variant="ghost"
-                                asChild
-                                className={cn('w-full justify-start', {
-                                    'bg-muted': isCurrentOrParentUrl(item.href),
-                                })}
+                                href={item.href}
+                                className={cn(
+                                    buttonVariants({
+                                        size: 'sm',
+                                        variant: 'ghost',
+                                    }),
+                                    'w-full justify-start',
+                                    {
+                                        'bg-muted': isCurrentOrParentUrl(
+                                            item.href,
+                                        ),
+                                    },
+                                )}
                             >
-                                <Link href={item.href}>
-                                    {item.icon && (
-                                        <item.icon className="h-4 w-4" />
-                                    )}
-                                    {item.title}
-                                </Link>
-                            </Button>
+                                {item.icon && <item.icon className="h-4 w-4" />}
+                                {item.title}
+                            </Link>
                         ))}
                     </nav>
                 </aside>

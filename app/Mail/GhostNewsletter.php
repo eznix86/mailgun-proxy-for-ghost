@@ -12,8 +12,8 @@ use Carbon\CarbonImmutable;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
-use Illuminate\Mail\Mailables\Attachment;
 use Illuminate\Mail\Mailables\Address;
+use Illuminate\Mail\Mailables\Attachment;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Mail\Mailables\Headers;
@@ -28,22 +28,23 @@ class GhostNewsletter extends Mailable implements ShouldQueue
         public NewsletterSendRequestData $request,
         public NewsletterRecipientData $recipient,
         public int $deliveryId,
-    ) {
-    }
+    ) {}
 
     public function envelope(): Envelope
     {
         return new Envelope(
-            from: $this->parseAddress($this->request->message->from),
+            from: $this->request ? $this->parseAddress($this->request->message->from) : new Address('noreply@example.com', 'Newsletter'),
             replyTo: $this->replyToAddresses(),
-            subject: $this->request->message->subject,
+            subject: $this->request?->message?->subject ?? 'Newsletter',
         );
     }
 
     public function headers(): Headers
     {
+        $headers = $this->request?->headers ?? [];
+
         return new Headers(
-            text: collect($this->request->headers)
+            text: collect($headers)
                 ->merge([
                     'x_newsletter_delivery_id' => (string) $this->deliveryId,
                 ])
@@ -55,8 +56,11 @@ class GhostNewsletter extends Mailable implements ShouldQueue
 
     public function content(): Content
     {
+        $html = $this->request?->message?->html;
+        $text = $this->request?->message?->text;
+
         return new Content(
-            htmlString: $this->request->message->html ?? nl2br(e($this->request->message->text ?? '')),
+            htmlString: $html ?? nl2br(e($text ?? '')),
         );
     }
 

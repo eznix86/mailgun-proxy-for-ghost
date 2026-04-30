@@ -1,5 +1,25 @@
-import { Form, Head, InfiniteScroll } from '@inertiajs/react';
+import { Form, Head, InfiniteScroll, Link } from '@inertiajs/react';
+import {
+    Activity,
+    AlertTriangle,
+    ArchiveX,
+    CalendarDays,
+    Eye,
+    Globe2,
+    Mail,
+    Send,
+    ShieldAlert,
+} from 'lucide-react';
 import { useState } from 'react';
+import {
+    Area,
+    AreaChart,
+    CartesianGrid,
+    Line,
+    LineChart,
+    XAxis,
+    YAxis,
+} from 'recharts';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -9,8 +29,96 @@ import {
     CardHeader,
     CardTitle,
 } from '@/components/ui/card';
+import type { ChartConfig } from '@/components/ui/chart';
+import {
+    ChartContainer,
+    ChartTooltip,
+    ChartTooltipContent,
+} from '@/components/ui/chart';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
+import {
+    Sheet,
+    SheetContent,
+    SheetDescription,
+    SheetHeader,
+    SheetTitle,
+} from '@/components/ui/sheet';
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from '@/components/ui/table';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
-import { dashboard } from '@/routes';
+import { dashboard, health } from '@/routes';
+import { retry } from '@/routes/newsletter-requests';
+
+type SummaryMetric = {
+    label: string;
+    value: string;
+    detail: string;
+    tone: 'neutral' | 'info' | 'success' | 'warning' | 'danger';
+};
+
+type AlertItem = {
+    message: string;
+    level: 'ok' | 'warning' | 'danger';
+};
+
+type RecentFailure = {
+    time: string | null;
+    event: string;
+    recipient: string;
+    reason: string;
+};
+
+type DeliveryTimelinePoint = {
+    date: string;
+    sent: number;
+    delivered: number;
+    opened: number;
+    clicked: number;
+    failed: number;
+    open_rate: number;
+    click_rate: number;
+    failure_rate: number;
+};
+
+type DashboardMetric = SummaryMetric & {
+    chartKey?: keyof DeliveryTimelinePoint;
+    targetTab: 'delivery' | 'failures' | 'suppressions';
+};
+
+type DeliveryReport = {
+    metrics: SummaryMetric[];
+    timeline: DeliveryTimelinePoint[];
+};
+
+type FailureReason = {
+    reason: string;
+    count: number;
+};
+
+type SuppressionRow = {
+    email: string;
+    type: string;
+    reason: string;
+    created_at: string | null;
+};
+
+type SuppressionReport = {
+    metrics: SummaryMetric[];
+    rows: SuppressionRow[];
+};
 
 type DeliveryEvent = {
     id: number;
@@ -59,403 +167,916 @@ type ScrollPage<T> = {
 };
 
 export default function Dashboard({
+    summary,
+    alerts,
+    recentFailures,
+    delivery,
+    failureReasons,
+    suppressions,
     requests,
 }: {
+    summary: SummaryMetric[];
+    alerts: AlertItem[];
+    recentFailures: RecentFailure[];
+    delivery: DeliveryReport;
+    failureReasons: FailureReason[];
+    suppressions: SuppressionReport;
     requests: ScrollPage<RequestItem>;
 }) {
     const requestItems = requests.data;
     const [selectedRequestId, setSelectedRequestId] = useState<number | null>(
-        requestItems[0]?.id ?? null,
+        null,
     );
+    const [activeTab, setActiveTab] = useState('overview');
     const selectedRequest =
         requestItems.find((request) => request.id === selectedRequestId) ??
-        requestItems[0] ??
         null;
+    const suppressionTotal = suppressions.metrics.reduce(
+        (total, metric) => total + Number.parseInt(metric.value, 10),
+        0,
+    );
+    const metrics = dashboardMetrics(summary, suppressionTotal);
 
     return (
         <>
             <Head title="Dashboard" />
-            <div className="relative isolate flex h-full flex-1 flex-col gap-6 overflow-hidden rounded-[2rem] bg-[radial-gradient(circle_at_top_left,rgba(15,118,110,0.12),transparent_30%),linear-gradient(180deg,hsl(var(--background)),hsl(var(--muted))/0.35)] p-4 md:p-6">
-                <section className="relative overflow-hidden rounded-[1.75rem] border border-slate-900/80 bg-slate-950 p-6 text-white shadow-2xl shadow-slate-950/20 md:p-7">
-                    <div className="absolute inset-y-0 right-0 w-2/3 bg-[radial-gradient(circle_at_top_right,rgba(45,212,191,0.22),transparent_42%),radial-gradient(circle_at_bottom_right,rgba(244,63,94,0.14),transparent_38%)]" />
-                    <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.035)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.035)_1px,transparent_1px)] bg-[size:32px_32px] opacity-40" />
+            <div className="min-h-svh flex-1 bg-[#f4f5f6] p-3 text-[#141619] md:p-5 dark:bg-background dark:text-foreground">
+                <div className="rounded-2xl bg-white shadow-sm ring-1 ring-black/5 dark:bg-card dark:ring-white/10">
+                    <div className="flex flex-col gap-5 px-5 py-6 md:px-8">
+                        <header className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                            <div className="space-y-2">
+                                <h1 className="text-2xl font-semibold tracking-tight text-pretty md:text-3xl">
+                                    Email delivery
+                                </h1>
+                                <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+                                    <Globe2 className="size-4" aria-hidden />
+                                    <span>
+                                        Newsletter proxy delivery telemetry
+                                    </span>
+                                </div>
+                            </div>
 
-                    <div className="relative max-w-3xl">
-                        <div className="mb-3 text-xs font-semibold tracking-[0.32em] text-teal-200 uppercase">
-                            Operations console
-                        </div>
-                        <h1 className="text-3xl font-semibold tracking-tight text-white md:text-4xl">
-                            Newsletter delivery control
-                        </h1>
-                        <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-300 md:text-base">
-                            Triage requests, inspect recipient-level delivery
-                            traces, and retry failed downstream sends without
-                            losing the queue context.
-                        </p>
-                    </div>
-
-                    <div className="relative mt-6 grid gap-3 md:grid-cols-3">
-                        <MetricCard
-                            label="Recent requests"
-                            value={requestItems.length.toString()}
-                            detail="Recent proxied traffic"
-                        />
-                        <MetricCard
-                            label="Failed requests"
-                            value={requestItems
-                                .filter(
-                                    (request) =>
-                                        request.status === 'failed' ||
-                                        requestNeedsAttention(request),
-                                )
-                                .length.toString()}
-                            detail="Need attention"
-                        />
-                        <MetricCard
-                            label="Tracked deliveries"
-                            value={requestItems
-                                .flatMap((request) =>
-                                    request.attempts.flatMap(
-                                        (attempt) => attempt.deliveries,
-                                    ),
-                                )
-                                .length.toString()}
-                            detail="Recipient-level history"
-                        />
-                    </div>
-                </section>
-
-                <div className="grid min-h-0 gap-5 xl:grid-cols-[minmax(0,0.92fr)_minmax(440px,1.08fr)]">
-                    {requestItems.length === 0 ? (
-                        <Card className="rounded-[1.5rem] border-dashed xl:col-span-2">
-                            <CardHeader>
-                                <CardTitle>No newsletter traffic yet</CardTitle>
-                                <CardDescription>
-                                    Incoming Mailgun-compatible requests and
-                                    downstream delivery history will appear
-                                    here.
-                                </CardDescription>
-                            </CardHeader>
-                        </Card>
-                    ) : (
-                        <>
-                            <Card className="overflow-hidden rounded-[1.5rem] border-border/70 bg-card/95 shadow-xl shadow-slate-950/5 backdrop-blur">
-                                <CardHeader className="border-b border-border/70 bg-muted/20 pb-4">
-                                    <div className="flex items-center justify-between gap-3">
-                                        <div>
-                                            <CardTitle>
-                                                Transmission queue
-                                            </CardTitle>
-                                            <CardDescription>
-                                                Select a request to inspect its
-                                                delivery trace.
-                                            </CardDescription>
-                                        </div>
-                                        <Badge
-                                            variant="outline"
-                                            className="rounded-full"
+                            <div className="flex flex-wrap items-center gap-2">
+                                <Button variant="outline" asChild>
+                                    <Link href={health()} prefetch>
+                                        <Activity aria-hidden />
+                                        Open health checks
+                                    </Link>
+                                </Button>
+                                <div className="flex items-center gap-2">
+                                    <span className="sr-only">Period</span>
+                                    <Select defaultValue="30d">
+                                        <SelectTrigger
+                                            aria-label="Select period"
+                                            className="h-9 w-[168px] rounded-lg bg-white dark:bg-background"
                                         >
-                                            Live feed
-                                        </Badge>
-                                    </div>
-                                </CardHeader>
-                                <CardContent className="p-0">
-                                    <InfiniteScroll
-                                        data="requests"
-                                        className="divide-y divide-border/70"
-                                        buffer={400}
-                                        loading={
-                                            <div className="py-4 text-center text-sm text-muted-foreground">
-                                                Loading more requests...
-                                            </div>
-                                        }
-                                    >
-                                        {requestItems.map((request) => (
-                                            <RequestRow
-                                                key={request.id}
-                                                request={request}
-                                                selected={
-                                                    selectedRequest?.id ===
-                                                    request.id
-                                                }
-                                                onSelect={() =>
-                                                    setSelectedRequestId(
-                                                        request.id,
-                                                    )
-                                                }
+                                            <CalendarDays
+                                                className="size-4 text-muted-foreground"
+                                                aria-hidden
                                             />
-                                        ))}
-                                    </InfiniteScroll>
-                                </CardContent>
-                            </Card>
+                                            <SelectValue aria-label="Selected period" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="24h">
+                                                Last 24 hours
+                                            </SelectItem>
+                                            <SelectItem value="7d">
+                                                Last 7 days
+                                            </SelectItem>
+                                            <SelectItem value="30d">
+                                                Last 30 days
+                                            </SelectItem>
+                                            <SelectItem value="90d">
+                                                Last 90 days
+                                            </SelectItem>
+                                            <SelectItem value="ytd">
+                                                Year to date
+                                            </SelectItem>
+                                            <SelectItem value="12m">
+                                                Last 12 months
+                                            </SelectItem>
+                                            <SelectItem value="all">
+                                                All time
+                                            </SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                            </div>
+                        </header>
 
-                            <RequestDetails request={selectedRequest} />
-                        </>
-                    )}
+                        <Tabs
+                            value={activeTab}
+                            onValueChange={setActiveTab}
+                            className="gap-6"
+                        >
+                            <TabsList
+                                variant="line"
+                                className="flex h-auto w-full flex-wrap justify-start gap-2 p-0"
+                            >
+                                <TabsTrigger value="overview">
+                                    <Activity aria-hidden />
+                                    Overview
+                                </TabsTrigger>
+                                <TabsTrigger value="delivery">
+                                    <Mail aria-hidden />
+                                    Delivery
+                                </TabsTrigger>
+                                <TabsTrigger value="failures">
+                                    <ShieldAlert aria-hidden />
+                                    Failures & complaints
+                                </TabsTrigger>
+                                <TabsTrigger value="suppressions">
+                                    <ArchiveX aria-hidden />
+                                    Suppressions
+                                </TabsTrigger>
+                            </TabsList>
+
+                            <TabsContent value="overview" className="space-y-6">
+                                <section className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+                                    {metrics.map((metric) => (
+                                        <MetricCard
+                                            key={metric.label}
+                                            metric={metric}
+                                            chartData={delivery.timeline}
+                                            onViewMore={() =>
+                                                setActiveTab(metric.targetTab)
+                                            }
+                                        />
+                                    ))}
+                                </section>
+
+                                <section className="grid gap-4 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
+                                    <StatusAlerts alerts={alerts} />
+                                    <RecentFailures failures={recentFailures} />
+                                </section>
+
+                                <RequestQueue
+                                    requests={requestItems}
+                                    onSelect={setSelectedRequestId}
+                                    title="Recent requests"
+                                    description="Latest request batches for trace inspection."
+                                />
+                            </TabsContent>
+
+                            <TabsContent value="delivery" className="space-y-6">
+                                <DeliveryTab delivery={delivery} />
+                            </TabsContent>
+
+                            <TabsContent value="failures" className="space-y-6">
+                                <FailuresTab
+                                    timeline={delivery.timeline}
+                                    reasons={failureReasons}
+                                    failures={recentFailures}
+                                />
+                            </TabsContent>
+
+                            <TabsContent
+                                value="suppressions"
+                                className="space-y-6"
+                            >
+                                <SuppressionsTab suppressions={suppressions} />
+                            </TabsContent>
+                        </Tabs>
+                    </div>
                 </div>
+
+                <Sheet
+                    open={selectedRequest !== null}
+                    onOpenChange={(open) => {
+                        if (!open) {
+                            setSelectedRequestId(null);
+                        }
+                    }}
+                >
+                    <SheetContent className="w-full overflow-y-auto p-0 sm:max-w-3xl">
+                        {selectedRequest && (
+                            <>
+                                <SheetHeader className="border-b px-6 py-5 text-left">
+                                    <SheetTitle>
+                                        Request #{selectedRequest.id}
+                                    </SheetTitle>
+                                    <SheetDescription>
+                                        Delivery attempts, recipients, and event
+                                        timeline for this request.
+                                    </SheetDescription>
+                                </SheetHeader>
+                                <RequestDetails request={selectedRequest} />
+                            </>
+                        )}
+                    </SheetContent>
+                </Sheet>
             </div>
         </>
     );
 }
 
 function MetricCard({
-    label,
-    value,
-    detail,
+    metric,
+    chartData,
+    chartKey,
+    onViewMore,
 }: {
-    label: string;
-    value: string;
-    detail: string;
+    metric: SummaryMetric | DashboardMetric;
+    chartData?: DeliveryTimelinePoint[];
+    chartKey?: keyof DeliveryTimelinePoint;
+    onViewMore?: () => void;
+}) {
+    const activeChartKey =
+        chartKey ?? ('chartKey' in metric ? metric.chartKey : undefined);
+
+    return (
+        <Card className="overflow-hidden rounded-xl border-[#e5e9eb] shadow-none transition-[border-color,box-shadow] hover:border-[#d7dde1] hover:shadow-sm dark:border-border">
+            <CardHeader className="gap-4 pb-3">
+                <div className="flex items-center justify-between gap-3">
+                    <CardDescription className="flex items-center gap-2">
+                        <span
+                            className={cn(
+                                'size-2 rounded-full',
+                                toneDotClassName(metric.tone),
+                            )}
+                        />
+                        {metric.label}
+                    </CardDescription>
+                    {onViewMore ? (
+                        <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="h-8 rounded-lg px-3 text-xs"
+                            onClick={onViewMore}
+                        >
+                            View more
+                        </Button>
+                    ) : null}
+                    {!onViewMore ? <MetricIcon tone={metric.tone} /> : null}
+                </div>
+                <CardTitle className="text-3xl font-semibold tabular-nums">
+                    {metric.value}
+                </CardTitle>
+                <p className="text-sm text-muted-foreground">{metric.detail}</p>
+            </CardHeader>
+            <CardContent className="pt-0">
+                {chartData && activeChartKey ? (
+                    <MetricAreaChart
+                        data={chartData}
+                        dataKey={activeChartKey}
+                        tone={metric.tone}
+                    />
+                ) : (
+                    <MetricEmptyChart tone={metric.tone} />
+                )}
+            </CardContent>
+        </Card>
+    );
+}
+
+function DeliveryTab({ delivery }: { delivery: DeliveryReport }) {
+    return (
+        <>
+            <section className="grid gap-4 md:grid-cols-3">
+                {delivery.metrics.map((metric) => (
+                    <MetricCard
+                        key={metric.label}
+                        metric={metric}
+                        chartData={delivery.timeline}
+                        chartKey={deliveryMetricChartKey(metric.label)}
+                    />
+                ))}
+            </section>
+
+            <Card className="rounded-xl border-[#e5e9eb] shadow-none dark:border-border">
+                <CardHeader>
+                    <CardTitle>Timeline</CardTitle>
+                    <CardDescription>
+                        Daily sent, opened, clicked, and failed delivery
+                        signals.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-5">
+                    <DeliveryLineChart data={delivery.timeline} />
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Date</TableHead>
+                                <TableHead>Sent</TableHead>
+                                <TableHead>Open rate</TableHead>
+                                <TableHead>Click rate</TableHead>
+                                <TableHead>Failure rate</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {delivery.timeline.map((point) => (
+                                <TableRow key={point.date}>
+                                    <TableCell>{point.date}</TableCell>
+                                    <TableCell>{point.sent}</TableCell>
+                                    <TableCell>{point.open_rate}%</TableCell>
+                                    <TableCell>{point.click_rate}%</TableCell>
+                                    <TableCell>{point.failure_rate}%</TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </CardContent>
+            </Card>
+        </>
+    );
+}
+
+function FailuresTab({
+    timeline,
+    reasons,
+    failures,
+}: {
+    timeline: DeliveryTimelinePoint[];
+    reasons: FailureReason[];
+    failures: RecentFailure[];
 }) {
     return (
-        <Card className="rounded-[1.25rem] border-white/10 bg-white/[0.07] shadow-none backdrop-blur-md">
-            <CardHeader className="gap-2 p-4">
-                <CardDescription className="text-xs tracking-[0.18em] text-slate-300 uppercase">
-                    {label}
+        <>
+            <Card className="rounded-xl border-[#e5e9eb] shadow-none dark:border-border">
+                <CardHeader>
+                    <CardTitle>Failure and complaint rate</CardTitle>
+                    <CardDescription>
+                        Failed, rejected, and complaint signals across the last
+                        30 days.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <FailureLineChart data={timeline} />
+                </CardContent>
+            </Card>
+
+            <section className="grid gap-4 xl:grid-cols-[minmax(0,0.75fr)_minmax(0,1.25fr)]">
+                <FailureReasons reasons={reasons} />
+                <RecentFailures
+                    failures={failures}
+                    title="Recent failures and complaints"
+                />
+            </section>
+        </>
+    );
+}
+
+function FailureReasons({ reasons }: { reasons: FailureReason[] }) {
+    return (
+        <Card className="rounded-xl border-[#e5e9eb] shadow-none dark:border-border">
+            <CardHeader>
+                <CardTitle>Failure reasons</CardTitle>
+                <CardDescription>
+                    Grouped causes from provider events.
                 </CardDescription>
-                <CardTitle className="text-3xl font-semibold text-white tabular-nums">
-                    {value}
-                </CardTitle>
-                <p className="text-sm text-slate-400">{detail}</p>
             </CardHeader>
+            <CardContent>
+                {reasons.length === 0 ? (
+                    <p className="rounded-md border border-dashed p-4 text-sm text-muted-foreground">
+                        No failure reasons recorded.
+                    </p>
+                ) : (
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Reason</TableHead>
+                                <TableHead>Count</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {reasons.map((reason) => (
+                                <TableRow key={reason.reason}>
+                                    <TableCell>{reason.reason}</TableCell>
+                                    <TableCell>{reason.count}</TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                )}
+            </CardContent>
+        </Card>
+    );
+}
+
+function SuppressionsTab({
+    suppressions,
+}: {
+    suppressions: SuppressionReport;
+}) {
+    return (
+        <>
+            <section className="grid gap-4 md:grid-cols-3">
+                {suppressions.metrics.map((metric) => (
+                    <MetricCard key={metric.label} metric={metric} />
+                ))}
+            </section>
+
+            <Card className="rounded-xl border-[#e5e9eb] shadow-none dark:border-border">
+                <CardHeader>
+                    <CardTitle>Suppression list</CardTitle>
+                    <CardDescription>
+                        Recipients that bounced, complained, or opted out.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    {suppressions.rows.length === 0 ? (
+                        <p className="rounded-md border border-dashed p-4 text-sm text-muted-foreground">
+                            No suppression events are currently recorded.
+                        </p>
+                    ) : (
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Email</TableHead>
+                                    <TableHead>Type</TableHead>
+                                    <TableHead>Reason</TableHead>
+                                    <TableHead>Created</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {suppressions.rows.map((row) => (
+                                    <TableRow
+                                        key={`${row.email}-${row.type}-${row.created_at}`}
+                                    >
+                                        <TableCell className="font-mono text-xs">
+                                            {row.email}
+                                        </TableCell>
+                                        <TableCell>
+                                            <StatusBadge status={row.type} />
+                                        </TableCell>
+                                        <TableCell>{row.reason}</TableCell>
+                                        <TableCell>
+                                            {formatDateTime(row.created_at)}
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    )}
+                </CardContent>
+            </Card>
+        </>
+    );
+}
+
+function MetricAreaChart({
+    data,
+    dataKey,
+    tone,
+}: {
+    data: DeliveryTimelinePoint[];
+    dataKey: keyof DeliveryTimelinePoint;
+    tone: SummaryMetric['tone'];
+}) {
+    const color = chartColor(tone);
+    const config = {
+        [dataKey]: {
+            label: String(dataKey),
+            color,
+        },
+    } satisfies ChartConfig;
+
+    return (
+        <ChartContainer config={config} className="aspect-auto h-28">
+            <AreaChart
+                data={data}
+                margin={{ left: 0, right: 0, top: 8, bottom: 0 }}
+            >
+                <defs>
+                    <linearGradient
+                        id={`fill-${String(dataKey)}`}
+                        x1="0"
+                        y1="0"
+                        x2="0"
+                        y2="1"
+                    >
+                        <stop
+                            offset="5%"
+                            stopColor={color}
+                            stopOpacity={0.28}
+                        />
+                        <stop
+                            offset="95%"
+                            stopColor={color}
+                            stopOpacity={0.02}
+                        />
+                    </linearGradient>
+                </defs>
+                <CartesianGrid vertical={false} />
+                <XAxis
+                    dataKey="date"
+                    tickLine={false}
+                    axisLine={false}
+                    interval="preserveStartEnd"
+                />
+                <ChartTooltip content={<ChartTooltipContent />} />
+                <Area
+                    dataKey={dataKey as string}
+                    type="monotone"
+                    stroke={color}
+                    fill={`url(#fill-${String(dataKey)})`}
+                    strokeWidth={2}
+                />
+            </AreaChart>
+        </ChartContainer>
+    );
+}
+
+function MetricEmptyChart({ tone }: { tone: SummaryMetric['tone'] }) {
+    return (
+        <div className="relative h-28 overflow-hidden rounded-lg">
+            <div className="absolute inset-x-0 top-8 border-t border-[#e5e9eb] dark:border-border" />
+            <div
+                className={cn(
+                    'absolute right-0 bottom-9 left-0 h-px',
+                    toneLineClassName(tone),
+                )}
+            />
+            <div className="absolute inset-x-0 bottom-0 flex justify-between text-xs text-muted-foreground">
+                <span>Live</span>
+                <span>No trend yet</span>
+            </div>
+        </div>
+    );
+}
+
+function DeliveryLineChart({ data }: { data: DeliveryTimelinePoint[] }) {
+    const config = {
+        sent: { label: 'Sent', color: 'var(--chart-2)' },
+        opened: { label: 'Opened', color: 'var(--chart-1)' },
+        clicked: { label: 'Clicked', color: 'var(--chart-3)' },
+        failed: { label: 'Failed', color: 'var(--destructive)' },
+    } satisfies ChartConfig;
+
+    return (
+        <ChartContainer config={config} className="aspect-auto h-72">
+            <LineChart data={data} margin={{ left: 12, right: 12 }}>
+                <CartesianGrid vertical={false} />
+                <XAxis
+                    dataKey="date"
+                    tickLine={false}
+                    axisLine={false}
+                    interval="preserveStartEnd"
+                />
+                <YAxis tickLine={false} axisLine={false} />
+                <ChartTooltip content={<ChartTooltipContent />} />
+                <Line
+                    dataKey="sent"
+                    type="monotone"
+                    stroke="var(--color-sent)"
+                    strokeWidth={2}
+                    dot={false}
+                />
+                <Line
+                    dataKey="opened"
+                    type="monotone"
+                    stroke="var(--color-opened)"
+                    strokeWidth={2}
+                    dot={false}
+                />
+                <Line
+                    dataKey="clicked"
+                    type="monotone"
+                    stroke="var(--color-clicked)"
+                    strokeWidth={2}
+                    dot={false}
+                />
+                <Line
+                    dataKey="failed"
+                    type="monotone"
+                    stroke="var(--color-failed)"
+                    strokeWidth={2}
+                    dot={false}
+                />
+            </LineChart>
+        </ChartContainer>
+    );
+}
+
+function FailureLineChart({ data }: { data: DeliveryTimelinePoint[] }) {
+    const config = {
+        failure_rate: { label: 'Failure rate', color: 'var(--destructive)' },
+    } satisfies ChartConfig;
+
+    return (
+        <ChartContainer config={config} className="aspect-auto h-72">
+            <AreaChart data={data} margin={{ left: 12, right: 12 }}>
+                <defs>
+                    <linearGradient
+                        id="fill-failure-rate"
+                        x1="0"
+                        y1="0"
+                        x2="0"
+                        y2="1"
+                    >
+                        <stop
+                            offset="5%"
+                            stopColor="var(--destructive)"
+                            stopOpacity={0.28}
+                        />
+                        <stop
+                            offset="95%"
+                            stopColor="var(--destructive)"
+                            stopOpacity={0.02}
+                        />
+                    </linearGradient>
+                </defs>
+                <CartesianGrid vertical={false} />
+                <XAxis
+                    dataKey="date"
+                    tickLine={false}
+                    axisLine={false}
+                    interval="preserveStartEnd"
+                />
+                <YAxis tickLine={false} axisLine={false} />
+                <ChartTooltip content={<ChartTooltipContent />} />
+                <Area
+                    dataKey="failure_rate"
+                    type="monotone"
+                    stroke="var(--color-failure_rate)"
+                    fill="url(#fill-failure-rate)"
+                    strokeWidth={2}
+                />
+            </AreaChart>
+        </ChartContainer>
+    );
+}
+
+function StatusAlerts({ alerts }: { alerts: AlertItem[] }) {
+    return (
+        <Card className="rounded-xl border-[#e5e9eb] shadow-none dark:border-border">
+            <CardHeader className="flex-row items-start justify-between gap-4">
+                <div>
+                    <CardTitle>Status and alerts</CardTitle>
+                    <CardDescription>
+                        Current delivery conditions that may need attention.
+                    </CardDescription>
+                </div>
+                <Badge variant="outline">Updated now</Badge>
+            </CardHeader>
+            <CardContent className="space-y-3">
+                {alerts.map((alert) => (
+                    <div
+                        key={alert.message}
+                        className="flex items-center justify-between gap-3 text-sm"
+                    >
+                        <span>{alert.message}</span>
+                        <StatusBadge status={alert.level} />
+                    </div>
+                ))}
+            </CardContent>
+        </Card>
+    );
+}
+
+function RecentFailures({
+    failures,
+    title = 'Recent failures preview',
+}: {
+    failures: RecentFailure[];
+    title?: string;
+}) {
+    return (
+        <Card className="rounded-xl border-[#e5e9eb] shadow-none dark:border-border">
+            <CardHeader>
+                <CardTitle>{title}</CardTitle>
+                <CardDescription>
+                    Latest failed, rejected, or complained recipient events.
+                </CardDescription>
+            </CardHeader>
+            <CardContent>
+                {failures.length === 0 ? (
+                    <p className="rounded-md border border-dashed p-4 text-sm text-muted-foreground">
+                        No failure or complaint events are currently recorded.
+                    </p>
+                ) : (
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Time</TableHead>
+                                <TableHead>Event</TableHead>
+                                <TableHead>Recipient</TableHead>
+                                <TableHead>Reason</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {failures.map((failure) => (
+                                <TableRow
+                                    key={`${failure.event}-${failure.recipient}-${failure.time}`}
+                                >
+                                    <TableCell className="whitespace-nowrap text-muted-foreground">
+                                        {formatDateTime(failure.time)}
+                                    </TableCell>
+                                    <TableCell>
+                                        <DeliveryEventBadge
+                                            event={failure.event}
+                                        />
+                                    </TableCell>
+                                    <TableCell className="font-mono text-xs">
+                                        {failure.recipient}
+                                    </TableCell>
+                                    <TableCell>{failure.reason}</TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                )}
+            </CardContent>
+        </Card>
+    );
+}
+
+function RequestQueue({
+    requests,
+    onSelect,
+    title = 'Requests',
+    description = 'Inspect individual newsletter requests without crowding the delivery overview.',
+}: {
+    requests: RequestItem[];
+    onSelect: (id: number) => void;
+    title?: string;
+    description?: string;
+}) {
+    return (
+        <Card className="overflow-hidden rounded-xl border-[#e5e9eb] shadow-none dark:border-border">
+            <CardHeader>
+                <CardTitle>{title}</CardTitle>
+                <CardDescription>{description}</CardDescription>
+            </CardHeader>
+            <CardContent className="p-0">
+                {requests.length === 0 ? (
+                    <p className="p-6 text-sm text-muted-foreground">
+                        Incoming Mailgun-compatible requests will appear here.
+                    </p>
+                ) : (
+                    <InfiniteScroll
+                        data="requests"
+                        buffer={400}
+                        loading={
+                            <p className="p-4 text-center text-sm text-muted-foreground">
+                                Loading more requests…
+                            </p>
+                        }
+                    >
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Request</TableHead>
+                                    <TableHead>Status</TableHead>
+                                    <TableHead>Domain</TableHead>
+                                    <TableHead>Subject</TableHead>
+                                    <TableHead>Deliveries</TableHead>
+                                    <TableHead>Latest</TableHead>
+                                    <TableHead>Updated</TableHead>
+                                    <TableHead className="text-right">
+                                        Action
+                                    </TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {requests.map((request) => (
+                                    <RequestRow
+                                        key={request.id}
+                                        request={request}
+                                        onSelect={() => onSelect(request.id)}
+                                    />
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </InfiniteScroll>
+                )}
+            </CardContent>
         </Card>
     );
 }
 
 function RequestRow({
     request,
-    selected,
     onSelect,
 }: {
     request: RequestItem;
-    selected: boolean;
     onSelect: () => void;
 }) {
-    const latestAttempt = request.attempts[0];
-    const totalDeliveries = request.attempts.flatMap(
+    const deliveries = request.attempts.flatMap(
         (attempt) => attempt.deliveries,
-    ).length;
-    const latestAttemptNeedsAttention = requestNeedsAttention(request);
+    );
     const latestEvent =
-        latestAttempt?.deliveries.find((delivery) => delivery.latest_event)
-            ?.latest_event ?? request.status;
+        deliveries.find((delivery) => delivery.latest_event)?.latest_event ??
+        request.status;
 
     return (
-        <button
-            type="button"
-            onClick={onSelect}
-            className={cn(
-                'group relative grid w-full gap-3 border-l-4 px-5 py-4 text-left transition duration-200 md:grid-cols-[1fr_auto]',
-                requestAccentClassName(latestEvent),
-                selected
-                    ? 'bg-slate-950 text-white shadow-2xl ring-1 shadow-slate-950/20 ring-slate-800 ring-inset'
-                    : 'bg-card hover:bg-slate-50/80 dark:hover:bg-muted/40',
-            )}
-        >
-            {selected && (
-                <div className="absolute inset-y-0 right-0 w-24 bg-gradient-to-l from-teal-400/10 to-transparent" />
-            )}
-            <div className="min-w-0 space-y-2">
-                <div className="flex min-w-0 flex-wrap items-center gap-2">
-                    <span
-                        className={cn(
-                            'font-semibold',
-                            selected ? 'text-white' : 'text-foreground',
-                        )}
-                    >
-                        Request #{request.id}
-                    </span>
-                    {latestAttemptNeedsAttention ? (
-                        <Badge className="bg-rose-500/10 text-rose-700 dark:text-rose-200">
-                            needs attention
-                        </Badge>
-                    ) : (
-                        <StatusBadge status={request.status} />
-                    )}
-                    <Badge
-                        variant="outline"
-                        className={cn(
-                            'rounded-full',
-                            selected && 'border-white/15 text-slate-300',
-                        )}
-                    >
-                        {request.domain || 'no-domain'}
-                    </Badge>
-                </div>
-                <p
-                    className={cn(
-                        'line-clamp-1 text-sm font-medium',
-                        selected ? 'text-slate-100' : 'text-foreground',
-                    )}
-                >
-                    {request.subject || '(no subject)'}
-                </p>
-                <div
-                    className={cn(
-                        'flex flex-wrap gap-x-3 gap-y-1 text-xs',
-                        selected ? 'text-slate-400' : 'text-muted-foreground',
-                    )}
-                >
-                    <span>{request.attempts.length} attempts</span>
-                    <span>{totalDeliveries} deliveries</span>
-                    <span className="capitalize">Latest: {latestEvent}</span>
-                </div>
-            </div>
-            <div
-                className={cn(
-                    'text-xs md:text-right',
-                    selected ? 'text-slate-400' : 'text-muted-foreground',
-                )}
-            >
-                <div>Updated</div>
-                <div
-                    className={cn(
-                        'font-medium',
-                        selected ? 'text-white' : 'text-foreground',
-                    )}
-                >
-                    {formatDateTime(request.updated_at)}
-                </div>
-            </div>
-        </button>
+        <TableRow>
+            <TableCell className="font-medium">#{request.id}</TableCell>
+            <TableCell>
+                <StatusBadge status={request.status} />
+            </TableCell>
+            <TableCell>
+                <Badge variant="outline">{request.domain || 'no-domain'}</Badge>
+            </TableCell>
+            <TableCell className="max-w-[24rem] truncate">
+                {request.subject || '(no subject)'}
+            </TableCell>
+            <TableCell>{deliveries.length}</TableCell>
+            <TableCell className="capitalize">{latestEvent}</TableCell>
+            <TableCell className="text-muted-foreground">
+                {formatDateTime(request.updated_at)}
+            </TableCell>
+            <TableCell className="text-right">
+                <Button variant="outline" size="sm" onClick={onSelect}>
+                    <Eye />
+                    View
+                </Button>
+            </TableCell>
+        </TableRow>
     );
 }
 
 function RequestDetails({ request }: { request: RequestItem | null }) {
     if (!request) {
-        return (
-            <Card className="rounded-[1.5rem] border-dashed">
-                <CardHeader>
-                    <CardTitle>Select a request</CardTitle>
-                    <CardDescription>
-                        Delivery history and events will appear here.
-                    </CardDescription>
-                </CardHeader>
-            </Card>
-        );
+        return null;
     }
 
-    const latestAttempt = request.attempts[0];
-
     return (
-        <Card className="overflow-hidden rounded-[1.75rem] border-border/70 bg-card/95 shadow-xl shadow-slate-950/10 backdrop-blur xl:sticky xl:top-6 xl:self-start">
-            <CardHeader className="relative gap-4 overflow-hidden border-b border-slate-800 bg-slate-950 text-white">
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(20,184,166,0.2),transparent_38%)]" />
-                <div className="relative flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+        <div className="space-y-5 p-6">
+            <section className="space-y-4">
+                <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                     <div className="min-w-0 space-y-2">
                         <div className="flex flex-wrap items-center gap-2">
-                            <CardTitle className="text-white">
+                            <h2 className="text-lg font-semibold">
                                 Request #{request.id}
-                            </CardTitle>
+                            </h2>
                             <StatusBadge status={request.status} />
-                            <Badge
-                                variant="outline"
-                                className="rounded-full border-white/15 text-slate-300"
-                            >
+                            <Badge variant="outline">
                                 {request.domain || 'no-domain'}
                             </Badge>
                         </div>
-                        <CardDescription className="line-clamp-2 text-base text-slate-200">
+                        <CardDescription className="line-clamp-2 text-base">
                             {request.subject || '(no subject)'}
                         </CardDescription>
                     </div>
                 </div>
-
-                <div className="relative grid gap-3 rounded-2xl border border-white/10 bg-white/[0.06] p-4 text-sm backdrop-blur md:grid-cols-2">
+                <div className="grid gap-3 rounded-lg border bg-muted/20 p-4 text-sm md:grid-cols-2">
                     <Field
                         label="From"
                         value={request.from || '(unknown sender)'}
-                        inverted
                     />
                     <Field
                         label="To"
                         value={request.to || '(unknown recipient)'}
-                        inverted
                     />
                     <Field
                         label="Created"
                         value={formatDateTime(request.created_at)}
-                        inverted
                     />
                     <Field
                         label="Updated"
                         value={formatDateTime(request.updated_at)}
-                        inverted
                     />
                 </div>
+            </section>
 
-                {latestAttempt?.error_message && (
-                    <div className="relative rounded-2xl border border-rose-300/20 bg-rose-500/15 px-4 py-3 text-sm text-rose-50">
-                        <div className="font-medium">Latest failure</div>
-                        <div className="mt-1">
-                            {latestAttempt.error_message}
-                        </div>
-                        {latestAttempt.error_class && (
-                            <div className="mt-1 text-xs opacity-80">
-                                {latestAttempt.error_class}
-                            </div>
-                        )}
-                    </div>
-                )}
-            </CardHeader>
-
-            <CardContent className="max-h-none space-y-5 bg-[linear-gradient(180deg,hsl(var(--muted))/0.2,transparent)] p-5 xl:max-h-[calc(100vh-14rem)] xl:overflow-y-auto">
+            <div className="space-y-4">
                 {request.attempts.map((attempt, index) => (
-                    <section
-                        key={attempt.id}
-                        className="relative overflow-hidden rounded-[1.5rem] border border-border/70 bg-background p-4 shadow-sm"
-                    >
-                        <div className="absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-teal-400 via-sky-400 to-slate-300" />
+                    <section key={attempt.id} className="rounded-lg border p-4">
                         <div className="flex flex-wrap items-start justify-between gap-3">
                             <div>
-                                <div className="text-xs font-semibold tracking-[0.2em] text-muted-foreground uppercase">
+                                <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
                                     Transmission attempt
-                                </div>
-                                <div className="mt-1 font-semibold text-foreground">
+                                </p>
+                                <h3 className="mt-1 font-semibold">
                                     Attempt {request.attempts.length - index} of{' '}
                                     {request.attempts.length}
-                                </div>
-                                <div className="mt-1 flex flex-wrap gap-3 text-xs text-muted-foreground">
-                                    <span>
-                                        Started{' '}
-                                        {formatDateTime(attempt.started_at)}
-                                    </span>
-                                    <span>
-                                        Finished{' '}
-                                        {formatDateTime(attempt.finished_at)}
-                                    </span>
-                                    <span>
-                                        {attempt.deliveries.length} deliveries
-                                    </span>
-                                </div>
+                                </h3>
+                                <p className="mt-1 text-xs text-muted-foreground">
+                                    Started {formatDateTime(attempt.started_at)}{' '}
+                                    · Finished{' '}
+                                    {formatDateTime(attempt.finished_at)} ·{' '}
+                                    {attempt.deliveries.length} deliveries
+                                </p>
                             </div>
-                            <Badge
-                                variant="outline"
-                                className="rounded-full font-mono"
-                            >
-                                #{attempt.id}
-                            </Badge>
+                            <Badge variant="outline">#{attempt.id}</Badge>
                         </div>
 
-                        {attempt.deliveries.length === 0 ? (
-                            <p className="mt-4 rounded-xl border border-border/60 bg-muted/20 px-4 py-3 text-sm text-muted-foreground">
-                                No delivery rows were created for this attempt.
-                            </p>
-                        ) : (
-                            <div className="mt-4 space-y-3">
-                                {attempt.deliveries.map((delivery) => (
-                                    <DeliveryPanel
-                                        key={delivery.id}
-                                        requestId={request.id}
-                                        delivery={delivery}
-                                    />
-                                ))}
+                        {attempt.error_message && (
+                            <div className="mt-4 rounded-md border border-destructive/30 bg-destructive/5 p-3 text-sm">
+                                <div className="font-medium">
+                                    Latest failure
+                                </div>
+                                <p className="mt-1 text-muted-foreground">
+                                    {attempt.error_message}
+                                </p>
                             </div>
                         )}
+
+                        <div className="mt-4 space-y-3">
+                            {attempt.deliveries.map((delivery) => (
+                                <DeliveryPanel
+                                    key={delivery.id}
+                                    requestId={request.id}
+                                    delivery={delivery}
+                                />
+                            ))}
+                        </div>
                     </section>
                 ))}
-            </CardContent>
-        </Card>
+            </div>
+        </div>
     );
 }
 
@@ -471,19 +1092,11 @@ function DeliveryPanel({
     );
 
     return (
-        <div
-            className={cn(
-                'rounded-2xl border bg-card p-4 shadow-sm transition hover:shadow-md',
-                deliveryAccentClassName(
-                    delivery.latest_event,
-                    delivery.latest_severity,
-                ),
-            )}
-        >
+        <div className="rounded-lg border bg-card p-4">
             <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                 <div className="min-w-0 space-y-2">
                     <div className="flex flex-wrap items-center gap-2">
-                        <div className="font-medium break-all text-foreground">
+                        <div className="font-medium break-all">
                             {delivery.recipient}
                         </div>
                         {delivery.latest_event && (
@@ -493,31 +1106,23 @@ function DeliveryPanel({
                             />
                         )}
                     </div>
-                    <div className="text-sm text-muted-foreground">
+                    <p className="text-sm text-muted-foreground">
                         Provider {delivery.provider}
                         {delivery.provider_message_id ? (
                             <span className="font-mono text-xs">
                                 {' '}
-                                {' • '}
-                                {delivery.provider_message_id}
+                                · {delivery.provider_message_id}
                             </span>
                         ) : null}
-                    </div>
+                    </p>
                 </div>
-
                 {canRetry && (
                     <Form
-                        action={`/newsletter-requests/${requestId}/retry`}
-                        method="post"
+                        {...retry.form(requestId)}
                         options={{ preserveScroll: true }}
                     >
                         {({ processing }) => (
-                            <Button
-                                size="sm"
-                                variant="default"
-                                className="rounded-full bg-slate-950 text-white hover:bg-slate-800"
-                                disabled={processing}
-                            >
+                            <Button size="sm" disabled={processing}>
                                 Retry
                             </Button>
                         )}
@@ -525,7 +1130,7 @@ function DeliveryPanel({
                 )}
             </div>
 
-            <div className="mt-4 grid gap-2 rounded-xl border border-border/60 bg-muted/20 p-3 text-xs text-muted-foreground md:grid-cols-3">
+            <div className="mt-4 grid gap-2 rounded-md border bg-muted/20 p-3 text-xs md:grid-cols-3">
                 <Field
                     label="Accepted"
                     value={formatDateTime(delivery.accepted_at)}
@@ -540,7 +1145,7 @@ function DeliveryPanel({
                 />
             </div>
 
-            <div className="mt-4 space-y-2 rounded-xl border border-border/50 bg-background/80 p-3">
+            <div className="mt-4 space-y-2">
                 {delivery.events.length === 0 ? (
                     <p className="text-sm text-muted-foreground">
                         No delivery events recorded yet.
@@ -549,17 +1154,8 @@ function DeliveryPanel({
                     delivery.events.map((event) => (
                         <div
                             key={event.id}
-                            className="relative flex flex-col gap-2 rounded-xl border border-border/50 bg-background px-3 py-2 pl-9 text-sm md:flex-row md:items-center md:justify-between"
+                            className="grid gap-2 rounded-md border px-3 py-2 text-sm md:grid-cols-[1fr_auto] md:items-center"
                         >
-                            <span
-                                className={cn(
-                                    'absolute top-3.5 left-3 h-2.5 w-2.5 rounded-full ring-4',
-                                    eventDotClassName(
-                                        event.event,
-                                        event.severity,
-                                    ),
-                                )}
-                            />
                             <div className="flex flex-wrap items-center gap-2">
                                 <DeliveryEventBadge
                                     event={event.event}
@@ -583,35 +1179,38 @@ function DeliveryPanel({
     );
 }
 
-function Field({
-    label,
-    value,
-    inverted = false,
-}: {
-    label: string;
-    value: string;
-    inverted?: boolean;
-}) {
+function Field({ label, value }: { label: string; value: string }) {
     return (
         <div className="min-w-0">
-            <div
-                className={cn(
-                    'text-xs font-medium tracking-[0.14em] uppercase',
-                    inverted ? 'text-slate-400' : 'text-muted-foreground',
-                )}
-            >
+            <div className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
                 {label}
             </div>
-            <div
-                className={cn(
-                    'mt-1 text-sm break-words',
-                    inverted ? 'text-slate-100' : 'text-foreground',
-                )}
-            >
-                {value}
-            </div>
+            <div className="mt-1 break-words">{value}</div>
         </div>
     );
+}
+
+function MetricIcon({ tone }: { tone: SummaryMetric['tone'] }) {
+    const className = cn(
+        'size-4 text-muted-foreground',
+        tone === 'danger' && 'text-destructive',
+        tone === 'warning' && 'text-amber-600',
+        tone === 'success' && 'text-emerald-600',
+    );
+
+    if (tone === 'danger') {
+        return <ShieldAlert className={className} />;
+    }
+
+    if (tone === 'warning') {
+        return <AlertTriangle className={className} />;
+    }
+
+    if (tone === 'success') {
+        return <Send className={className} />;
+    }
+
+    return <Mail className={className} />;
 }
 
 function StatusBadge({ status }: { status: string }) {
@@ -642,87 +1241,111 @@ function DeliveryEventBadge({
     );
 }
 
-function requestNeedsAttention(request: RequestItem) {
-    return (
-        request.attempts[0]?.deliveries.some((delivery) =>
-            ['failed', 'rejected'].includes(delivery.latest_event ?? ''),
-        ) ?? false
-    );
+function toneDotClassName(tone: SummaryMetric['tone']) {
+    return {
+        neutral: 'bg-slate-300',
+        info: 'bg-sky-500',
+        success: 'bg-emerald-500',
+        warning: 'bg-amber-500',
+        danger: 'bg-rose-500',
+    }[tone];
 }
 
-function requestAccentClassName(event: string) {
-    if (event === 'rejected' || event === 'failed') {
-        return 'border-l-rose-500';
-    }
-
-    if (
-        event === 'accepted' ||
-        event === 'delivered' ||
-        event === 'processed'
-    ) {
-        return 'border-l-emerald-500';
-    }
-
-    if (event === 'processing' || event === 'pending') {
-        return 'border-l-amber-500';
-    }
-
-    return 'border-l-slate-300';
+function toneLineClassName(tone: SummaryMetric['tone']) {
+    return {
+        neutral: 'bg-slate-300',
+        info: 'bg-sky-500',
+        success: 'bg-sky-500',
+        warning: 'bg-amber-400',
+        danger: 'bg-rose-500',
+    }[tone];
 }
 
-function deliveryAccentClassName(
-    event: string | null,
-    severity: string | null,
-) {
-    if (event === 'rejected' || severity === 'permanent') {
-        return 'border-rose-500/40 bg-rose-500/[0.04]';
-    }
-
-    if (event === 'failed' || severity === 'temporary') {
-        return 'border-amber-500/40 bg-amber-500/[0.04]';
-    }
-
-    if (
-        event === 'accepted' ||
-        event === 'delivered' ||
-        event === 'opened' ||
-        event === 'clicked'
-    ) {
-        return 'border-emerald-500/35 bg-emerald-500/[0.04]';
-    }
-
-    return 'border-border/60';
+function chartColor(tone: SummaryMetric['tone']) {
+    return {
+        neutral: 'var(--chart-3)',
+        info: 'var(--chart-2)',
+        success: 'var(--chart-2)',
+        warning: 'var(--chart-4)',
+        danger: 'var(--destructive)',
+    }[tone];
 }
 
-function eventDotClassName(event: string, severity?: string | null) {
-    if (event === 'rejected' || severity === 'permanent') {
-        return 'bg-rose-500 ring-rose-500/15';
-    }
+function deliveryMetricChartKey(
+    label: string,
+): keyof DeliveryTimelinePoint | undefined {
+    return {
+        Delivered: 'delivered',
+        'Avg. open rate': 'open_rate',
+        'Avg. click rate': 'click_rate',
+    }[label] as keyof DeliveryTimelinePoint | undefined;
+}
 
-    if (event === 'failed' || severity === 'temporary') {
-        return 'bg-amber-500 ring-amber-500/15';
-    }
+function dashboardMetrics(
+    summary: SummaryMetric[],
+    suppressionTotal: number,
+): DashboardMetric[] {
+    const byLabel = new Map(summary.map((metric) => [metric.label, metric]));
+    const queued = byLabel.get('Queued requests');
+    const processing = byLabel.get('Processing');
+    const delivered = byLabel.get('Tracked deliveries');
+    const failureRate = byLabel.get('Failure rate');
 
-    if (
-        event === 'accepted' ||
-        event === 'delivered' ||
-        event === 'opened' ||
-        event === 'clicked'
-    ) {
-        return 'bg-emerald-500 ring-emerald-500/15';
-    }
-
-    return 'bg-slate-400 ring-slate-400/15';
+    return [
+        {
+            label: 'Queued batches',
+            value: queued?.value ?? '0',
+            detail: queued?.detail ?? 'Waiting for the first send attempt',
+            tone: queued?.tone ?? 'neutral',
+            targetTab: 'delivery',
+        },
+        {
+            label: 'Processing',
+            value: processing?.value ?? '0',
+            detail: processing?.detail ?? 'Attempts currently open',
+            tone: processing?.tone ?? 'info',
+            targetTab: 'delivery',
+        },
+        {
+            label: 'Sent',
+            value: delivered?.value ?? '0',
+            detail: delivered?.detail ?? 'Recipient-level delivery rows',
+            tone: delivered?.tone ?? 'success',
+            chartKey: 'sent',
+            targetTab: 'delivery',
+        },
+        {
+            label: 'Failure rate',
+            value: failureRate?.value ?? '0%',
+            detail: failureRate?.detail ?? 'No failed or rejected deliveries',
+            tone: failureRate?.tone ?? 'success',
+            chartKey: 'failure_rate',
+            targetTab: 'failures',
+        },
+        {
+            label: 'Suppressions',
+            value: String(suppressionTotal),
+            detail: 'Bounce, complaint, and opt-out events',
+            tone: suppressionTotal > 0 ? 'warning' : 'neutral',
+            targetTab: 'suppressions',
+        },
+    ];
 }
 
 function statusBadgeClassName(status: string) {
     return (
         {
-            failed: 'bg-rose-500/15 text-rose-700 dark:text-rose-200',
+            ok: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-200',
+            warning: 'bg-amber-500/10 text-amber-700 dark:text-amber-200',
+            danger: 'bg-rose-500/10 text-rose-700 dark:text-rose-200',
+            failed: 'bg-rose-500/10 text-rose-700 dark:text-rose-200',
             processed:
-                'bg-emerald-500/15 text-emerald-700 dark:text-emerald-200',
-            processing: 'bg-amber-500/15 text-amber-700 dark:text-amber-200',
-            pending: 'bg-slate-500/15 text-slate-700 dark:text-slate-200',
+                'bg-emerald-500/10 text-emerald-700 dark:text-emerald-200',
+            processing: 'bg-amber-500/10 text-amber-700 dark:text-amber-200',
+            pending: 'bg-slate-500/10 text-slate-700 dark:text-slate-200',
+            bounces: 'bg-rose-500/10 text-rose-700 dark:text-rose-200',
+            complaints: 'bg-violet-500/10 text-violet-700 dark:text-violet-200',
+            unsubscribes: 'bg-slate-500/10 text-slate-700 dark:text-slate-200',
         }[status] ?? 'bg-muted text-muted-foreground'
     );
 }
@@ -736,17 +1359,12 @@ function eventBadgeClassName(event: string, severity?: string | null) {
         return 'border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-200';
     }
 
-    if (
-        event === 'accepted' ||
-        event === 'delivered' ||
-        event === 'opened' ||
-        event === 'clicked'
-    ) {
-        return 'border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-200';
-    }
-
     if (event === 'complained') {
         return 'border-violet-500/30 bg-violet-500/10 text-violet-700 dark:text-violet-200';
+    }
+
+    if (['accepted', 'delivered', 'opened', 'clicked'].includes(event)) {
+        return 'border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-200';
     }
 
     return 'border-border bg-muted text-muted-foreground';
