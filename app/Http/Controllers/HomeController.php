@@ -10,6 +10,6 @@ class HomeController extends Controller
 {
     public function __invoke(): RedirectResponse
     {
-        return redirect()->route('register');
+        return to_route('register');
     }
 }
