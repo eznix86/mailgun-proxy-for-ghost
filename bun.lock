@@ -64,7 +64,7 @@
         "typescript-eslint": "^8.23.0",
       },
       "optionalDependencies": {
-        "@rollup/rollup-linux-x64-gnu": "4.9.5",
+        "@rollup/rollup-linux-x64-gnu": "4.60.2",
         "@rollup/rollup-win32-x64-msvc": "4.9.5",
         "@tailwindcss/oxide-linux-x64-gnu": "^4.0.1",
         "@tailwindcss/oxide-win32-x64-msvc": "^4.0.1",
@@ -417,7 +417,7 @@
 
     "@rolldown/pluginutils": ["@rolldown/pluginutils@1.0.0-rc.3", "", {}, "sha512-eybk3TjzzzV97Dlj5c+XrBFW57eTNhzod66y9HrBlzJ6NsCrWCp/2kaPS3K9wJmurBC0Tdw4yPjXKZqlznim3Q=="],
 
-    "@rollup/rollup-linux-x64-gnu": ["@rollup/rollup-linux-x64-gnu@4.9.5", "", { "os": "linux", "cpu": "x64" }, "sha512-Dq1bqBdLaZ1Gb/l2e5/+o3B18+8TI9ANlA1SkejZqDgdU/jK/ThYaMPMJpVMMXy2uRHvGKbkz9vheVGdq3cJfA=="],
+    "@rollup/rollup-linux-x64-gnu": ["@rollup/rollup-linux-x64-gnu@4.60.2", "", { "os": "linux", "cpu": "x64" }, "sha512-UQjrkIdWrKI626Du8lCQ6MJp/6V1LAo2bOK9OTu4mSn8GGXIkPXk/Vsp4bLHCd9Z9Iz2OTEaokUE90VweJgIYQ=="],
 
     "@rollup/rollup-win32-x64-msvc": ["@rollup/rollup-win32-x64-msvc@4.9.5", "", { "os": "win32", "cpu": "x64" }, "sha512-1q+mykKE3Vot1kaFJIDoUFv5TuW+QQVaf2FmTT9krg86pQrGStOSJJ0Zil7CFagyxDuouTepzt5Y5TVzyajOdQ=="],
 
