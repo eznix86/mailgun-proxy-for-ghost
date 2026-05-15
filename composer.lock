@@ -8737,32 +8737,32 @@
         },
         {
             "name": "mrpunyapal/rector-pest",
-            "version": "0.2.11",
+            "version": "0.2.15",
             "source": {
                 "type": "git",
                 "url": "https://github.com/MrPunyapal/rector-pest.git",
-                "reference": "6f3e2a736f9e145e2fa8b08cf6645d23bfcee77a"
+                "reference": "624dba596ad1605e34a2ec7ac5eb5fffce960596"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/MrPunyapal/rector-pest/zipball/6f3e2a736f9e145e2fa8b08cf6645d23bfcee77a",
-                "reference": "6f3e2a736f9e145e2fa8b08cf6645d23bfcee77a",
+                "url": "https://api.github.com/repos/MrPunyapal/rector-pest/zipball/624dba596ad1605e34a2ec7ac5eb5fffce960596",
+                "reference": "624dba596ad1605e34a2ec7ac5eb5fffce960596",
                 "shasum": ""
             },
             "require": {
-                "mrpunyapal/peststan": "^0.2.5",
                 "php": "^8.2",
                 "rector/rector": "^2.0",
                 "symplify/rule-doc-generator-contracts": "^11.2"
             },
             "require-dev": {
+                "laravel/pao": "^1.0",
                 "laravel/pint": "^1.18",
-                "nunomaduro/pao": "^0.1.4",
+                "mrpunyapal/peststan": "^0.2.5",
                 "pestphp/pest": "^3.0 || ^4.0",
                 "phpstan/phpstan": "^2.1",
                 "symplify/rule-doc-generator": "^12.2"
             },
-            "type": "rector-extension",
+            "type": "library",
             "autoload": {
                 "psr-4": {
                     "RectorPest\\": "src/"
@@ -8793,7 +8793,7 @@
             ],
             "support": {
                 "issues": "https://github.com/MrPunyapal/rector-pest/issues",
-                "source": "https://github.com/MrPunyapal/rector-pest/tree/0.2.11"
+                "source": "https://github.com/MrPunyapal/rector-pest/tree/0.2.15"
             },
             "funding": [
                 {
@@ -8801,7 +8801,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2026-04-13T17:44:38+00:00"
+            "time": "2026-05-15T18:51:02+00:00"
         },
         {
             "name": "myclabs/deep-copy",
