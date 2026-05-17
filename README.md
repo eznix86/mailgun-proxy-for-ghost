@@ -74,6 +74,19 @@ Notes:
 - `apiKey` must match `MAILGUN_API_KEY` in the proxy `.env`.
 - `domain` should be the Ghost newsletter sending domain.
 
+## Docker Compose setup
+
+```bash
+cp .env.example .env
+# Edit .env with your configuration
+
+docker compose up -d --build
+docker compose exec app php artisan key:generate
+docker compose exec app php artisan migrate
+```
+
+The app will be available at `http://localhost:8080`.
+
 ## Local setup
 
 ```bash
