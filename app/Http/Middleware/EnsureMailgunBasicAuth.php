@@ -12,7 +12,16 @@ class EnsureMailgunBasicAuth
 {
     public function handle(Request $request, Closure $next): Response
     {
-        if ($request->getUser() !== 'api' || $request->getPassword() !== config('services.mailgun.key')) {
+        $expected = config('services.mailgun.key');
+
+        abort_if(
+            ! is_string($expected) || blank($expected),
+            Response::HTTP_SERVICE_UNAVAILABLE,
+            'Mailgun proxy not configured.',
+        );
+
+        if ($request->getUser() !== 'api'
+            || ! hash_equals($expected, (string) $request->getPassword())) {
             return response()->json([], Response::HTTP_UNAUTHORIZED, [
                 'WWW-Authenticate' => 'Basic realm="Mailgun Proxy"',
             ]);

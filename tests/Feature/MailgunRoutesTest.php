@@ -15,6 +15,22 @@ test('mailgun routes require valid basic auth', function () {
         ->assertHeader('WWW-Authenticate', 'Basic realm="Mailgun Proxy"');
 });
 
+test('mailgun routes require configured api key', function () {
+    config()->set('services.mailgun.key', null);
+
+    $this->withHeaders([
+        'Authorization' => 'Basic '.base64_encode('api:'),
+    ])->postJson(route('mailgun.messages', ['domain' => 'example.com']))
+        ->assertServiceUnavailable();
+
+    config()->set('services.mailgun.key', '');
+
+    $this->withHeaders([
+        'Authorization' => 'Basic '.base64_encode('api:'),
+    ])->postJson(route('mailgun.messages', ['domain' => 'example.com']))
+        ->assertServiceUnavailable();
+});
+
 test('mailgun messages route accepts valid basic auth', function () {
     config()->set('services.mailgun.key', 'test-mailgun-key');
 
