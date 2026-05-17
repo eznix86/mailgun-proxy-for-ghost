@@ -1,0 +1,3 @@
+nginx: /usr/sbin/nginx -c /etc/nginx/nginx.conf
+php-fpm: /entrypoint.sh
+queue: cd /var/www/html && php artisan queue:work --sleep=3 --tries=3 --timeout=90
