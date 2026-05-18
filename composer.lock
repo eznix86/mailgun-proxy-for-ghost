@@ -4275,20 +4275,21 @@
         },
         {
             "name": "sandermuller/laravel-fluent-validation",
-            "version": "1.24.0",
+            "version": "1.27.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/SanderMuller/laravel-fluent-validation.git",
-                "reference": "f9dc7a189bd092c91867a0a60bc625ca2d2ae104"
+                "reference": "22852458937411a657f3b244f8d213ad061f1a12"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/SanderMuller/laravel-fluent-validation/zipball/f9dc7a189bd092c91867a0a60bc625ca2d2ae104",
-                "reference": "f9dc7a189bd092c91867a0a60bc625ca2d2ae104",
+                "url": "https://api.github.com/repos/SanderMuller/laravel-fluent-validation/zipball/22852458937411a657f3b244f8d213ad061f1a12",
+                "reference": "22852458937411a657f3b244f8d213ad061f1a12",
                 "shasum": ""
             },
             "require": {
                 "illuminate/contracts": "^11.0||^12.0||^13.0",
+                "illuminate/http": "^11.0||^12.0||^13.0",
                 "illuminate/support": "^11.0||^12.0||^13.0",
                 "illuminate/validation": "^11.0||^12.0||^13.0",
                 "php": "^8.2"
@@ -4311,7 +4312,7 @@
                 "phpstan/phpstan-strict-rules": "^2.0.10",
                 "rector/rector": "^2.4.1",
                 "rector/type-perfect": "^2.1.2",
-                "sandermuller/package-boost": "^0.9.0",
+                "sandermuller/package-boost": "^0.15.0",
                 "spaze/phpstan-disallowed-calls": "^4.10",
                 "symplify/phpstan-extensions": "^12.0.2",
                 "tomasvotruba/cognitive-complexity": "^1.1",
@@ -4347,7 +4348,7 @@
             ],
             "support": {
                 "issues": "https://github.com/SanderMuller/laravel-fluent-validation/issues",
-                "source": "https://github.com/SanderMuller/laravel-fluent-validation/tree/1.24.0"
+                "source": "https://github.com/SanderMuller/laravel-fluent-validation/tree/1.27.1"
             },
             "funding": [
                 {
@@ -4355,7 +4356,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2026-04-24T06:38:55+00:00"
+            "time": "2026-05-11T20:50:34+00:00"
         },
         {
             "name": "spatie/laravel-data",
