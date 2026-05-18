@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "7d6974129ad9e4b066d4a2a5bea7fea9",
+    "content-hash": "d274ee413774368af00737d04244e972",
     "packages": [
         {
             "name": "bacon/bacon-qr-code",
@@ -11178,16 +11178,16 @@
         },
         {
             "name": "sandermuller/laravel-fluent-validation-rector",
-            "version": "0.18.0",
+            "version": "0.22.3",
             "source": {
                 "type": "git",
                 "url": "https://github.com/SanderMuller/laravel-fluent-validation-rector.git",
-                "reference": "3a1fc20609b8b14a05e2098e7218a0d60f5ac29c"
+                "reference": "04b9ddccc55731fce653175f9f6b9a2d9d52e395"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/SanderMuller/laravel-fluent-validation-rector/zipball/3a1fc20609b8b14a05e2098e7218a0d60f5ac29c",
-                "reference": "3a1fc20609b8b14a05e2098e7218a0d60f5ac29c",
+                "url": "https://api.github.com/repos/SanderMuller/laravel-fluent-validation-rector/zipball/04b9ddccc55731fce653175f9f6b9a2d9d52e395",
+                "reference": "04b9ddccc55731fce653175f9f6b9a2d9d52e395",
                 "shasum": ""
             },
             "require": {
@@ -11246,9 +11246,9 @@
             ],
             "support": {
                 "issues": "https://github.com/SanderMuller/laravel-fluent-validation-rector/issues",
-                "source": "https://github.com/SanderMuller/laravel-fluent-validation-rector/tree/0.18.0"
+                "source": "https://github.com/SanderMuller/laravel-fluent-validation-rector/tree/0.22.3"
             },
-            "time": "2026-04-27T13:10:56+00:00"
+            "time": "2026-04-29T04:23:16+00:00"
         },
         {
             "name": "sebastian/cli-parser",
