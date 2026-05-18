@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "7d6974129ad9e4b066d4a2a5bea7fea9",
+    "content-hash": "21f930b01416b54e1f000c8a84be74a6",
     "packages": [
         {
             "name": "bacon/bacon-qr-code",
@@ -11178,16 +11178,16 @@
         },
         {
             "name": "sandermuller/laravel-fluent-validation-rector",
-            "version": "0.18.0",
+            "version": "1.3.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/SanderMuller/laravel-fluent-validation-rector.git",
-                "reference": "3a1fc20609b8b14a05e2098e7218a0d60f5ac29c"
+                "reference": "d8c0a3c62d29b5eefef7a0cfbf4d9cd428a0dcb3"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/SanderMuller/laravel-fluent-validation-rector/zipball/3a1fc20609b8b14a05e2098e7218a0d60f5ac29c",
-                "reference": "3a1fc20609b8b14a05e2098e7218a0d60f5ac29c",
+                "url": "https://api.github.com/repos/SanderMuller/laravel-fluent-validation-rector/zipball/d8c0a3c62d29b5eefef7a0cfbf4d9cd428a0dcb3",
+                "reference": "d8c0a3c62d29b5eefef7a0cfbf4d9cd428a0dcb3",
                 "shasum": ""
             },
             "require": {
@@ -11198,6 +11198,7 @@
             },
             "require-dev": {
                 "laravel/pint": "^1.29",
+                "mrpunyapal/rector-pest": "^0.2.7",
                 "nikic/php-parser": "^5.4",
                 "orchestra/testbench": "^9.0||^10.11||^11.0",
                 "pestphp/pest": "^3.0||^4.4",
@@ -11205,7 +11206,7 @@
                 "phpstan/phpstan": "^2.0",
                 "phpstan/phpstan-strict-rules": "^2.0",
                 "rector/type-perfect": "^2.0",
-                "sandermuller/package-boost": "^0.9",
+                "sandermuller/package-boost": "^0.15.0",
                 "spaze/phpstan-disallowed-calls": "^4.10",
                 "symplify/phpstan-extensions": "^12.0",
                 "tomasvotruba/cognitive-complexity": "^1.0",
@@ -11246,9 +11247,9 @@
             ],
             "support": {
                 "issues": "https://github.com/SanderMuller/laravel-fluent-validation-rector/issues",
-                "source": "https://github.com/SanderMuller/laravel-fluent-validation-rector/tree/0.18.0"
+                "source": "https://github.com/SanderMuller/laravel-fluent-validation-rector/tree/1.3.0"
             },
-            "time": "2026-04-27T13:10:56+00:00"
+            "time": "2026-05-11T13:17:03+00:00"
         },
         {
             "name": "sebastian/cli-parser",
