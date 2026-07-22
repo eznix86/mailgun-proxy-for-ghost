@@ -1,4 +1,4 @@
-FROM golang:1.24-alpine AS hivemind
+FROM golang:1.26-alpine AS hivemind
 WORKDIR /src
 RUN --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go-build \
