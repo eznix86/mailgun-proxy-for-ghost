@@ -124,3 +124,13 @@ The proxy includes a Laravel/Inertia dashboard for inspecting newsletter request
 ```text
 /dashboard
 ```
+
+## License
+
+Copyright (C) 2026 Bruno Bernard
+
+This program is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the [GNU Affero General Public License](LICENSE) for more details.
+
+Because the AGPL-3.0 covers network use, anyone who runs a modified version of this proxy as a network service must make the corresponding source available to its users.
