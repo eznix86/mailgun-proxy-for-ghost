@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace App\Outbox;
 
 use App\Actions\Mailgun\ResolveRecipientPlaceholders;
+use App\Actions\Newsletter\CreateNewsletterDelivery;
 use App\Contracts\OutboxProvider;
 use App\Data\Newsletter\NewsletterRecipientData;
 use App\Data\Newsletter\NewsletterSendRequestData;
 use App\Mail\GhostNewsletter;
-use App\Models\NewsletterRequestDelivery;
 use App\Models\NewsletterRequestAttempt;
 use Illuminate\Support\Facades\Mail;
 
@@ -17,13 +17,20 @@ class BuiltinProvider implements OutboxProvider
 {
     public function __construct(
         private readonly ResolveRecipientPlaceholders $resolveRecipientPlaceholders,
-    ) {
-    }
+        private readonly CreateNewsletterDelivery $createNewsletterDelivery,
+        private readonly ResendBatchProvider $resendBatchProvider,
+    ) {}
 
     public function send(NewsletterSendRequestData $request, NewsletterRequestAttempt $attempt): void
     {
+        if ($this->shouldUseResendBatch()) {
+            $this->resendBatchProvider->send($request, $attempt);
+
+            return;
+        }
+
         foreach ($request->recipients as $recipient) {
-            $delivery = $this->createDelivery($attempt, $request, $recipient);
+            $delivery = $this->createNewsletterDelivery->handle($attempt, $request, $recipient);
 
             $mailable = new GhostNewsletter(
                 $this->resolveRecipientPlaceholders->handle($request, $recipient),
@@ -35,19 +42,10 @@ class BuiltinProvider implements OutboxProvider
         }
     }
 
-    private function createDelivery(NewsletterRequestAttempt $attempt, NewsletterSendRequestData $request, NewsletterRecipientData $recipient): NewsletterRequestDelivery
+    private function shouldUseResendBatch(): bool
     {
-        return $attempt->deliveries()->create([
-            'domain' => $request->source->domain,
-            'provider' => (string) config('services.outbox.provider', config('mail.default')),
-            'recipient' => $recipient->email,
-            'mailgun_message_id' => $request->variables['email_id'] ?? null,
-            'from' => $request->message->from,
-            'subject' => $request->message->subject,
-            'tags' => $request->options->tags,
-            'user_variables' => $request->variables,
-            'recipient_variables' => $recipient->variables,
-        ]);
+        return config('services.outbox.provider') === 'resend'
+            && (bool) config('services.outbox.resend.batch', true);
     }
 
     private function sendMailable(NewsletterSendRequestData $request, NewsletterRecipientData $recipient, GhostNewsletter $mailable): void

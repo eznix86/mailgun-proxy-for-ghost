@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -47,4 +49,26 @@ expect()->extend('toBeOne', function () {
 function something()
 {
     // ..
+}
+
+function resendWebhookSecret(): string
+{
+    return 'whsec_'.base64_encode('test-secret');
+}
+
+/**
+ * @param  array<string, mixed>  $payload
+ * @return array<string, string>
+ */
+function resendWebhookHeaders(array $payload, string $messageId = 'msg_123'): array
+{
+    $timestamp = (string) time();
+    $jsonPayload = json_encode($payload, JSON_THROW_ON_ERROR);
+    $signature = base64_encode(pack('H*', hash_hmac('sha256', "{$messageId}.{$timestamp}.{$jsonPayload}", 'test-secret')));
+
+    return [
+        'svix-id' => $messageId,
+        'svix-timestamp' => $timestamp,
+        'svix-signature' => 'v1,'.$signature,
+    ];
 }
