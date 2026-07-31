@@ -20,6 +20,16 @@ This is Mailgun-compatible proxy built specifically for Ghost newsletters. Ghost
 - Accepts Resend webhooks at `POST /api/webhook/resend`.
 - Exposes Ghost-compatible Mailgun events at `GET /v3/{domain}/events`.
 
+## Documentation
+
+Deeper guides live in [`docs/`](docs/):
+
+- [How it works](docs/how-it-works.md) — the send and analytics flows, and why the proxy runs in both directions.
+- [Configuration](docs/configuration.md) — full environment-variable reference and per-provider setup.
+- [Ghost setup](docs/ghost-setup.md) — Ghost-side config, the base-URL gotcha, and transactional email.
+- [Deployment](docs/deployment.md) — Docker image internals, reverse proxy, and the queue worker.
+- [Troubleshooting](docs/troubleshooting.md) — common failure modes and how to fix them.
+
 ## Laravel environment
 
 Add these values to the proxy `.env`:
@@ -46,7 +56,7 @@ Notes:
 https://newsletter-proxy.domain.tld/api/webhook/resend
 ```
 
-Enable Resend domain tracking for opens and clicks:
+On your Resend domain, enable **open tracking** but leave **click tracking off** — Ghost rewrites and tracks links itself, so provider-side click tracking would double-rewrite them and break Ghost's click analytics:
 
 ```text
 https://resend.com/docs/dashboard/domains/tracking
