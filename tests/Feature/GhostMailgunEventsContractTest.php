@@ -122,7 +122,7 @@ test('events pagination follows paging.next tokens, keeps next on every non-empt
     expect($collected)->toBe($sorted);
 });
 
-test('events honor the event filter and never surface hard-bounce (rejected) rows to Ghost', function (): void {
+test('events honor the event filter and surface hard bounces to Ghost as failed + permanent', function (): void {
     // Ghost v6.53.0 email-analytics-service.js:197,216 runs an opened-only pipeline and a
     // "delivered OR failed OR unsubscribed OR complained" pipeline (§A2b). ListMailgunEvents splits the
     // OR-list on " OR " and applies whereIn('event', ...).
@@ -130,9 +130,17 @@ test('events honor the event filter and never surface hard-bounce (rejected) row
 
     $delivery = ghostEventsDelivery();
     $at = CarbonImmutable::parse('2026-04-28 12:00:00');
-    foreach (['delivered', 'opened', 'complained', 'rejected'] as $i => $event) {
+    foreach (['delivered', 'opened', 'complained'] as $i => $event) {
         $delivery->events()->create(['event' => $event, 'occurred_at' => $at->addSeconds($i)]);
     }
+    // A Resend hard bounce is stored internally as event='rejected'
+    // (ResendWebhookController::EVENTS['email.bounced'] = ['rejected', null]).
+    $delivery->events()->create([
+        'event' => 'rejected',
+        'provider_event' => 'email.bounced',
+        'occurred_at' => $at->addSeconds(3),
+        'payload' => ['reason' => 'The recipient is on the suppression list (recent hard bounces).'],
+    ]);
 
     $auth = ['Authorization' => 'Basic '.base64_encode('api:test-mailgun-key')];
 
@@ -141,23 +149,31 @@ test('events honor the event filter and never surface hard-bounce (rejected) row
         ->assertJsonCount(1, 'items')
         ->assertJsonPath('items.0.event', 'opened');
 
-    // The full five-type filter Ghost sends returns delivered + opened + complained (in ascending order).
+    // FIXED (D2): the full five-type filter Ghost sends returns delivered + opened + complained AND the
+    // hard bounce — because ListMailgunEvents expands a `failed` request to also match stored `rejected`.
     $response = $this->withHeaders($auth)->getJson(route('mailgun.events', [
         'domain' => 'example.com',
         'event' => 'delivered OR opened OR failed OR unsubscribed OR complained',
         'ascending' => 'yes',
     ]));
-    $response->assertJsonCount(3, 'items');
-    expect(collect($response->json('items'))->pluck('event')->all())->toBe(['delivered', 'opened', 'complained']);
+    $response->assertJsonCount(4, 'items');
 
-    // DEVIATION (D2 — significant): a Resend hard bounce is stored as event='rejected'
-    // (ResendWebhookController::EVENTS['email.bounced'] = ['rejected', null]). Mailgun models a hard bounce
-    // as `failed` + severity=permanent (A3). Because 'rejected' is NOT one of the five types Ghost ever
-    // filters on, the bounce is silently EXCLUDED from every Ghost poll — hard-bounced recipients are never
-    // marked failed or suppressed in Ghost. Pinned as current behaviour; see the deviation report. (A fix
-    // means remapping the webhook to failed/permanent, which changes an established internal state and
-    // breaks ResendWebhookTest — out of scope for a fixtures PR.)
-    expect(collect($response->json('items'))->pluck('event')->all())->not->toContain('rejected');
+    // The internal `rejected` name never leaks; the bounce is served as Mailgun's `failed` (in ascending order).
+    expect(collect($response->json('items'))->pluck('event')->all())->toBe(['delivered', 'opened', 'complained', 'failed'])
+        ->and(collect($response->json('items'))->pluck('event')->all())->not->toContain('rejected');
+
+    // FIXED (D2): Ghost models a hard bounce as `failed` + severity=permanent (A3). The bounce is the last
+    // ascending row and carries severity=permanent → Ghost records a PERMANENT EmailRecipientFailure and
+    // suppresses the recipient, and delivery-status carries the honest Resend bounce message.
+    $response->assertJsonPath('items.3.event', 'failed')
+        ->assertJsonPath('items.3.severity', 'permanent')
+        ->assertJsonPath('items.3.delivery-status.message', 'The recipient is on the suppression list (recent hard bounces).');
+
+    // A poll for `failed` alone also surfaces the stored `rejected` bounce.
+    $this->withHeaders($auth)->getJson(route('mailgun.events', ['domain' => 'example.com', 'event' => 'failed', 'ascending' => 'yes']))
+        ->assertJsonCount(1, 'items')
+        ->assertJsonPath('items.0.event', 'failed')
+        ->assertJsonPath('items.0.severity', 'permanent');
 });
 
 test('events honor limit and the begin/end epoch-second window', function (): void {
@@ -193,19 +209,21 @@ test('events honor limit and the begin/end epoch-second window', function (): vo
         ->assertJsonCount(1, 'items');
 });
 
-test('failed events expose severity but omit delivery-status (documented gap)', function (): void {
+test('failed events expose severity and delivery-status', function (): void {
     // Ghost v6.53.0 mailgun-client.js:322-326 + newsletter-email-analytics-batch-processor.js:152-177 —
     // for `failed` events Ghost reads `severity` (permanent vs anything-else → temporary) AND
     // delivery-status.{message, code, enhanced-code} (§A3).
     config()->set('services.mailgun.key', 'test-mailgun-key');
 
-    // A Resend soft failure: email.delivery_delayed → ['failed', 'temporary'] (ResendWebhookController::EVENTS).
+    // A Resend soft failure: email.failed → ['failed', 'temporary'] carrying the honest Resend reason
+    // (normalized onto payload.reason at ingestion — see ResendWebhookController::failureReason).
     $delivery = ghostEventsDelivery();
     $delivery->events()->create([
         'event' => 'failed',
-        'provider_event' => 'email.delivery_delayed',
+        'provider_event' => 'email.failed',
         'severity' => 'temporary',
         'occurred_at' => CarbonImmutable::parse('2026-04-28 12:00:00'),
+        'payload' => ['reason' => 'reached_daily_quota'],
     ]);
 
     $response = $this->withHeaders([
@@ -214,13 +232,32 @@ test('failed events expose severity but omit delivery-status (documented gap)', 
 
     $response->assertSuccessful()
         ->assertJsonPath('items.0.event', 'failed')
-        ->assertJsonPath('items.0.severity', 'temporary');   // A3: severity present → Ghost records a temporary failure
+        ->assertJsonPath('items.0.severity', 'temporary')                          // A3: severity present → Ghost records a temporary failure
+        ->assertJsonPath('items.0.delivery-status.message', 'reached_daily_quota'); // A3: delivery-status carries the honest Resend reason
 
-    // DEVIATION (D3): MailgunEventResource emits no `delivery-status` object, so Ghost's EmailRecipientFailure
-    // rows never carry the bounce message/code, and the Mailgun 605/607 codes that drive local suppression
-    // inserts never appear (§A3 flags this as an expected delta). Furthermore the webhook never produces
-    // severity='permanent', so no failure is ever classified permanent. Pinned as current behaviour.
-    $response->assertJsonMissingPath('items.0.delivery-status');
+    // FIXED (D3): MailgunEventResource now emits a `delivery-status` object populated from the honest reason
+    // Resend supplied (bounce message / failed reason). It emits NO invented Mailgun 605/607 code (Resend
+    // provides none), so Ghost's local-suppression-on-bounce path stays absent — an expected delta (§A3).
+    expect($response->json('items.0.delivery-status'))->toBe(['message' => 'reached_daily_quota']);
+});
+
+test('a genuine failed event with no stored reason still carries a temporary severity', function (): void {
+    // Ghost reads severity on every failed event; a `failed` row with no severity must not read as permanent.
+    // ResendWebhookController::EVENTS['email.failed'] = ['failed', null] → the resource defaults it to temporary.
+    config()->set('services.mailgun.key', 'test-mailgun-key');
+
+    $delivery = ghostEventsDelivery();
+    $delivery->events()->create([
+        'event' => 'failed',
+        'provider_event' => 'email.failed',
+        'occurred_at' => CarbonImmutable::parse('2026-04-28 12:00:00'),
+    ]);
+
+    $this->withHeaders(['Authorization' => 'Basic '.base64_encode('api:test-mailgun-key')])
+        ->getJson(route('mailgun.events', ['domain' => 'example.com', 'event' => 'failed', 'ascending' => 'yes']))
+        ->assertJsonPath('items.0.event', 'failed')
+        ->assertJsonPath('items.0.severity', 'temporary')
+        ->assertJsonMissingPath('items.0.delivery-status');   // no stored reason → no delivery-status object (not invented)
 });
 
 test('events accept the tags filter but do not apply it (documented gap)', function (): void {

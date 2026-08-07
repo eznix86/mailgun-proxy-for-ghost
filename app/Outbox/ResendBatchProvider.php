@@ -140,6 +140,7 @@ class ResendBatchProvider implements OutboxProvider
                 event: 'failed',
                 providerEvent: 'message.failed',
                 payload: [
+                    'reason' => $throwable->getMessage(),
                     'error_message' => $throwable->getMessage(),
                     'error_class' => $throwable::class,
                 ],

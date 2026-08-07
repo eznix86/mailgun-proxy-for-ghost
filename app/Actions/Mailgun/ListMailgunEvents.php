@@ -71,16 +71,28 @@ class ListMailgunEvents
     }
 
     /**
+     * Translate Ghost's requested event types into the internal event names to
+     * match. Ghost only ever asks for `failed` (never the proxy's internal
+     * `rejected`), yet a Resend hard bounce is stored as `rejected` — so a poll
+     * for `failed` must ALSO surface stored `rejected` rows, which the resource
+     * then serves back as `failed` + `severity=permanent` (spike dossier §A3).
+     *
      * @return array<int, string>
      */
     private function events(Request $request): array
     {
-        return str((string) $request->string('event'))
+        $requested = str((string) $request->string('event'))
             ->explode(' OR ')
             ->map(fn (string $event): string => trim($event))
             ->filter()
             ->values()
             ->all();
+
+        if (in_array('failed', $requested, true) && ! in_array('rejected', $requested, true)) {
+            $requested[] = 'rejected';
+        }
+
+        return $requested;
     }
 
     private function decodePage(?string $page): int

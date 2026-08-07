@@ -26,9 +26,7 @@ class ResendWebhookController extends Controller
         'email.opened' => ['opened', null],
     ];
 
-    public function __construct(private readonly RecordDeliveryEvent $recordDeliveryEvent)
-    {
-    }
+    public function __construct(private readonly RecordDeliveryEvent $recordDeliveryEvent) {}
 
     public function __invoke(Request $request): JsonResponse
     {
@@ -59,11 +57,32 @@ class ResendWebhookController extends Controller
             payload: [
                 'provider_message_id' => $providerMessageId,
                 'provider_event_id' => $providerEventId,
+                'reason' => $this->failureReason($providerEvent, $payload),
                 'payload' => $payload,
             ],
         );
 
         return $this->ok();
+    }
+
+    /**
+     * Extract the honest failure reason Resend supplied so it can be served to
+     * Ghost as `delivery-status.message` (and drive the dashboard's failure
+     * grouping via `payload.reason`). Resend carries the reason on
+     * `data.bounce.message` for hard bounces and `data.failed.reason` for
+     * send failures; anything else has no reason.
+     *
+     * @param  array<string, mixed>  $payload
+     */
+    private function failureReason(string $providerEvent, array $payload): ?string
+    {
+        $reason = match ($providerEvent) {
+            'email.bounced' => data_get($payload, 'data.bounce.message'),
+            'email.failed' => data_get($payload, 'data.failed.reason'),
+            default => null,
+        };
+
+        return is_string($reason) && $reason !== '' ? $reason : null;
     }
 
     private function resolveDelivery(mixed $providerMessageId): ?NewsletterRequestDelivery
