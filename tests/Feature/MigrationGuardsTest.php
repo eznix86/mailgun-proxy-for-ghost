@@ -94,7 +94,7 @@ it('creates every table before another migration references it in a foreign key'
         }
     }
 
-    expect($violations)->toBe([]);
+    expect($violations)->toBeEmpty();
 });
 
 it("keeps every generated index and constraint identifier within MySQL's 64-character limit", function () {
@@ -157,5 +157,5 @@ it("keeps every generated index and constraint identifier within MySQL's 64-char
         }
     }
 
-    expect($violations)->toBe([]);
+    expect($violations)->toBeEmpty([]);
 });
