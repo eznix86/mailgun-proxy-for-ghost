@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('newsletter_request_delivery_events', function (Blueprint $table): void {
             $table->id();
-            $table->foreignIdFor(NewsletterRequestDelivery::class)->constrained()->cascadeOnDelete();
+            $table->foreignIdFor(NewsletterRequestDelivery::class)->constrained(indexName: 'delivery_events_delivery_id_foreign')->cascadeOnDelete();
             $table->string('event');
             $table->string('provider_event')->nullable();
             $table->string('severity')->nullable();
