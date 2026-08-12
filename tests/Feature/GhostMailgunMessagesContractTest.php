@@ -59,7 +59,7 @@ test('ghost messages endpoint accepts a realistic multipart batch and returns a 
         'h:List-Unsubscribe' => '<%recipient.list_unsubscribe%>, <%tag_unsubscribe_email%>', // A2a:78-81
         'h:List-Unsubscribe-Post' => 'List-Unsubscribe=One-Click',                     // A2a:78-81 one-click
         'v:email-id' => 'ghost-email-id-abc',                                          // A2a:84-86 — MUST be echoed in events as user-variables[email-id]
-        'o:tag' => ['bulk-email', 'ghost-email'],                                       // A2a:88-92 — repeated o:tag
+        'o:tag' => ['ghost-email', 'bulk-email'],                                       // A2a — repeated o:tag; ghost-email first since TryGhost/Ghost#29728 moved tag assembly into the provider (validated on Ghost 6.57.1)
         'o:tracking-opens' => 'yes',                                                    // A2a:99-101
         'o:deliverytime' => 'Tue, 28 Apr 2026 12:00:00 GMT',                           // A2a:104-106 — Date.toUTCString() (RFC-1123)
         'to' => ['ada@example.com', 'bruno@example.com'],                              // A2a: repeated `to`, one per recipient
@@ -178,7 +178,7 @@ function ghostMessagesInput(array $overrides = []): array
         'h:List-Unsubscribe' => '<%recipient.list_unsubscribe%>, <%tag_unsubscribe_email%>',
         'h:List-Unsubscribe-Post' => 'List-Unsubscribe=One-Click',
         'v:email-id' => 'ghost-email-id-abc',
-        'o:tag' => ['bulk-email', 'ghost-email'],
+        'o:tag' => ['ghost-email', 'bulk-email'],
         'o:tracking-opens' => 'yes',
         'o:deliverytime' => 'Tue, 28 Apr 2026 12:00:00 GMT',
         ...$overrides,
