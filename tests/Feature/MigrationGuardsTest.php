@@ -157,5 +157,5 @@ it("keeps every generated index and constraint identifier within MySQL's 64-char
         }
     }
 
-    expect($violations)->toBeEmpty([]);
+    expect($violations)->toBeEmpty();
 });
