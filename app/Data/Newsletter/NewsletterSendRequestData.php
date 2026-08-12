@@ -22,6 +22,5 @@ class NewsletterSendRequestData extends Data
         public array $variables,
         public NewsletterSendOptionsData $options,
         public array $metadata,
-    ) {
-    }
+    ) {}
 }

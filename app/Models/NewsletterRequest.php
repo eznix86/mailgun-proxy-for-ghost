@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use App\Enums\NewsletterRequestStatus;
 use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class NewsletterRequest extends Model
@@ -54,7 +54,7 @@ class NewsletterRequest extends Model
                 return NewsletterRequestStatus::Processing;
             }
 
-             if ($latestAttempt->deliveries()->whereIn('latest_event', ['failed', 'rejected'])->exists()) {
+            if ($latestAttempt->deliveries()->whereIn('latest_event', ['failed', 'rejected'])->exists()) {
                 return NewsletterRequestStatus::Failed;
             }
 

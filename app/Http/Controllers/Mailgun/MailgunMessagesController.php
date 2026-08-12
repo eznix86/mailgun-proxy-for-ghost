@@ -12,9 +12,7 @@ use Illuminate\Http\Request;
 
 class MailgunMessagesController extends Controller
 {
-    public function __construct(private readonly RecordMailgunMessageRequest $recordMailgunMessageRequest)
-    {
-    }
+    public function __construct(private readonly RecordMailgunMessageRequest $recordMailgunMessageRequest) {}
 
     public function __invoke(Request $request, string $domain): JsonResponse
     {

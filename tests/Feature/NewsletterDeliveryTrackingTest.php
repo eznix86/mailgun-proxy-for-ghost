@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Listeners\RecordAcceptedNewsletterDelivery;
 use App\Models\NewsletterRequest;
 use Illuminate\Mail\Events\MessageSent;
+use Illuminate\Mail\SentMessage;
 use Symfony\Component\Mailer\Envelope;
 use Symfony\Component\Mailer\SentMessage as SymfonySentMessage;
 use Symfony\Component\Mime\Address;
@@ -24,7 +25,7 @@ test('message sent listener records an accepted delivery event', function () {
         'subject' => 'Hello',
     ]);
 
-    $message = (new Email())
+    $message = (new Email)
         ->from(new Address('newsletter@example.com'))
         ->to(new Address('person@example.com'))
         ->subject('Hello')
@@ -39,7 +40,7 @@ test('message sent listener records an accepted delivery event', function () {
     ));
 
     resolve(RecordAcceptedNewsletterDelivery::class)->handle(
-        new MessageSent(new \Illuminate\Mail\SentMessage($sentMessage)),
+        new MessageSent(new SentMessage($sentMessage)),
     );
 
     $delivery->refresh();
@@ -64,7 +65,7 @@ test('message sent listener ignores duplicate accepted events for the same provi
         'subject' => 'Hello',
     ]);
 
-    $message = (new Email())
+    $message = (new Email)
         ->from(new Address('newsletter@example.com'))
         ->to(new Address('person@example.com'))
         ->subject('Hello')
@@ -78,7 +79,7 @@ test('message sent listener ignores duplicate accepted events for the same provi
         recipients: [new Address('person@example.com')],
     ));
 
-    $event = new MessageSent(new \Illuminate\Mail\SentMessage($sentMessage));
+    $event = new MessageSent(new SentMessage($sentMessage));
 
     resolve(RecordAcceptedNewsletterDelivery::class)->handle($event);
     resolve(RecordAcceptedNewsletterDelivery::class)->handle($event);

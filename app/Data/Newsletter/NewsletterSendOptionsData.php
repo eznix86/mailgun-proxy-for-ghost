@@ -16,8 +16,7 @@ class NewsletterSendOptionsData extends Data
         public array $tags,
         public ?bool $trackOpens,
         public ?CarbonImmutable $deliveryTime,
-    ) {
-    }
+    ) {}
 
     public function isDeliveredLater(): bool
     {

@@ -14,6 +14,5 @@ class NewsletterMessageData extends Data
         public ?string $html,
         public ?string $text,
         public ?string $ampHtml,
-    ) {
-    }
+    ) {}
 }

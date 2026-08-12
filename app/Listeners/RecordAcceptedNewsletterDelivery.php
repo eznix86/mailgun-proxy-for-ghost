@@ -10,9 +10,7 @@ use Illuminate\Mail\Events\MessageSent;
 
 class RecordAcceptedNewsletterDelivery
 {
-    public function __construct(private readonly RecordDeliveryEvent $recordDeliveryEvent)
-    {
-    }
+    public function __construct(private readonly RecordDeliveryEvent $recordDeliveryEvent) {}
 
     public function handle(MessageSent $event): void
     {

@@ -2,8 +2,8 @@
 
 declare(strict_types=1);
 
-use App\Contracts\OutboxProvider;
 use App\Actions\Mailgun\NormalizeMailgunRequest;
+use App\Contracts\OutboxProvider;
 use App\Events\NewsletterRequested;
 use App\Listeners\ProcessNewsletterRequest;
 use App\Mail\GhostNewsletter;

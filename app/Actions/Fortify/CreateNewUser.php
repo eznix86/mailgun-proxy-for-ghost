@@ -9,8 +9,8 @@ use App\Concerns\ProfileValidationRules;
 use App\Models\User;
 use App\Support\Registration;
 use Illuminate\Support\Facades\Validator;
-use Symfony\Component\HttpFoundation\Response;
 use Laravel\Fortify\Contracts\CreatesNewUsers;
+use Symfony\Component\HttpFoundation\Response;
 
 class CreateNewUser implements CreatesNewUsers
 {
