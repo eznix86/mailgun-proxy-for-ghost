@@ -21,7 +21,7 @@ class MailgunMessagesController extends Controller
         event(new NewsletterRequested($newsletterRequest));
 
         return response()->json([
-            'id' => 'message-id',
+            'id' => sprintf('<nr-%d@%s>', $newsletterRequest->id, $domain),
             'message' => 'Queued. Thank you.',
         ]);
     }

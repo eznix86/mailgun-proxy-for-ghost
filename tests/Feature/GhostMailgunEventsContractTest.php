@@ -53,11 +53,12 @@ test('events expose the exact fields Ghost normalizeEvent reads', function (): v
     // timestamp must be a NUMBER (epoch seconds), not an ISO string, so Ghost's `timestamp * 1000` is valid.
     expect($response->json('items.0.timestamp'))->toBeInt();
 
-    // DEVIATION (D1 — inert): Ghost matches an event to its batch via message.headers[message-id] ==
-    // email_batches.provider_id (the id the messages endpoint returned). The proxy returns a CONSTANT
-    // 'message-id' from POST /messages, yet emits the Ghost email id here — so message-id does NOT
-    // round-trip to the messages response. This is harmless: user-variables[email-id] is present and
-    // Ghost prefers it, skipping the provider-id lookup entirely (A3). Pinned so the shape stays stable.
+    // DEVIATION (D1 — narrowed): Ghost matches an event to its batch via message.headers[message-id] ==
+    // email_batches.provider_id (the id the messages endpoint returned). The messages endpoint now returns
+    // a UNIQUE <nr-{id}@{domain}> per request (no more shared provider_id across batches), but events still
+    // emit the Ghost email id here — so message-id does not round-trip to the messages response. This is
+    // harmless: user-variables[email-id] is present and Ghost prefers it, skipping the provider-id lookup
+    // entirely (A3). Pinned so the shape stays stable.
     expect($response->json('items.0.message.headers.message-id'))
         ->toBe($response->json('items.0.user-variables.email-id'));
 });

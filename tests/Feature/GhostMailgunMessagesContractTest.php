@@ -37,9 +37,12 @@ test('ghost messages endpoint accepts a realistic multipart batch and returns a 
     ])->post(route('mailgun.messages', ['domain' => 'example.com']), ghostMessagesInput());
 
     // Ghost v6.53.0 mailgun-email-provider.js:120-122,147 — reads ONLY `id` from the body and strips <>.
-    // Any JSON carrying a non-empty `id` string satisfies the contract.
+    // Ghost stores the bare id as email_batches.provider_id, so it must be UNIQUE per accepted request —
+    // a constant id would make every Ghost batch share one provider_id (wrong-batch matching hazard
+    // whenever an event arrives without user-variables[email-id]).
     $response->assertSuccessful();
-    expect($response->json('id'))->toBeString()->not->toBeEmpty();
+    expect($response->json('id'))->toBeString()->not->toBeEmpty()
+        ->toMatch('/^<nr-\d+@example\.com>$/');
 
     // The raw Ghost request is captured verbatim for the send pipeline (RecordMailgunMessageRequest).
     /** @var array<string, mixed> $original */
@@ -71,6 +74,22 @@ test('ghost messages endpoint accepts a realistic multipart batch and returns a 
         ->and($input['recipient-variables'])->toBeString();                            // A2a: recipient-variables is a JSON string keyed by email
 
     Event::assertDispatched(NewsletterRequested::class);
+});
+
+test('ghost messages endpoint returns a distinct id per accepted request', function (): void {
+    // Ghost keys email_batches.provider_id on the returned id and later matches events against it
+    // (mailgun-client.js:304-328 falls back to message.headers[message-id] when user-variables[email-id]
+    // is absent) — so two batches must never share an id.
+    config()->set('services.mailgun.key', 'test-mailgun-key');
+    Event::fake([NewsletterRequested::class]);
+
+    $headers = ['Authorization' => 'Basic '.base64_encode('api:test-mailgun-key')];
+    $first = $this->withHeaders($headers)->post(route('mailgun.messages', ['domain' => 'example.com']), ghostMessagesInput());
+    $second = $this->withHeaders($headers)->post(route('mailgun.messages', ['domain' => 'example.com']), ghostMessagesInput());
+
+    $first->assertSuccessful();
+    $second->assertSuccessful();
+    expect($first->json('id'))->not->toBe($second->json('id'));
 });
 
 test('ghost messages batch expands %recipient.x% tokens per recipient with no cross-leak', function (): void {
