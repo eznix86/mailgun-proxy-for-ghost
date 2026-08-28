@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('newsletter_request_deliveries', function (Blueprint $table): void {
             $table->id();
-            $table->foreignIdFor(NewsletterRequestAttempt::class)->constrained()->cascadeOnDelete();
+            $table->foreignIdFor(NewsletterRequestAttempt::class)->constrained(indexName: 'deliveries_attempt_id_foreign')->cascadeOnDelete();
             $table->string('domain');
             $table->string('provider');
             $table->string('recipient');

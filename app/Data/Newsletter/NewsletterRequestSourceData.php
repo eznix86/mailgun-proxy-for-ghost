@@ -13,6 +13,5 @@ class NewsletterRequestSourceData extends Data
         public string $domain,
         public string $url,
         public string $path,
-    ) {
-    }
+    ) {}
 }

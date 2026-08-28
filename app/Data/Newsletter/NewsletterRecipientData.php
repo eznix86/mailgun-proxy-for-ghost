@@ -14,6 +14,5 @@ class NewsletterRecipientData extends Data
     public function __construct(
         public string $email,
         public array $variables,
-    ) {
-    }
+    ) {}
 }

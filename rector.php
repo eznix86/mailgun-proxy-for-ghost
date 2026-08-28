@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-use RectorPest\Rules\ChainExpectCallsRector;
-use RectorPest\Set\PestLevelSetList;
-use RectorPest\Set\PestSetList;
 use Rector\Caching\ValueObject\Storage\FileCacheStorage;
 use Rector\Config\RectorConfig;
 use Rector\ValueObject\PhpVersion;
 use RectorLaravel\Set\LaravelLevelSetList;
 use RectorLaravel\Set\LaravelSetList;
+use RectorPest\Rules\ChainExpectCallsRector;
+use RectorPest\Set\PestLevelSetList;
+use RectorPest\Set\PestSetList;
 use SanderMuller\FluentValidationRector\Set\FluentValidationSetList;
 
 return static function (RectorConfig $rectorConfig): void {

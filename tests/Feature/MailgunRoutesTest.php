@@ -40,9 +40,9 @@ test('mailgun messages route accepts valid basic auth', function () {
         'subject' => 'Hello',
     ])->assertSuccessful()
         ->assertJson([
-            'id' => 'message-id',
             'message' => 'Queued. Thank you.',
-        ]);
+        ])
+        ->assertJsonPath('id', fn (string $id): bool => (bool) preg_match('/^<nr-\d+@example\.com>$/', $id));
 });
 
 test('mailgun events route accepts valid basic auth with optional page', function () {

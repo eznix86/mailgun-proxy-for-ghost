@@ -11,9 +11,7 @@ use Illuminate\Http\Request;
 
 class MailgunEventsController extends Controller
 {
-    public function __construct(private readonly ListMailgunEvents $listMailgunEvents)
-    {
-    }
+    public function __construct(private readonly ListMailgunEvents $listMailgunEvents) {}
 
     public function __invoke(Request $request, string $domain, ?string $page = null): JsonResponse
     {

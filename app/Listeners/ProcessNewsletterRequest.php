@@ -18,8 +18,7 @@ class ProcessNewsletterRequest implements ShouldQueue
     public function __construct(
         private readonly NormalizeMailgunRequest $normalizeMailgunRequest,
         private readonly OutboxProvider $outboxProvider,
-    ) {
-    }
+    ) {}
 
     public function handle(NewsletterRequested $event): void
     {
