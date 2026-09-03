@@ -9509,16 +9509,16 @@
         },
         {
             "name": "mrpunyapal/peststan",
-            "version": "0.2.10",
+            "version": "0.2.12",
             "source": {
                 "type": "git",
                 "url": "https://github.com/MrPunyapal/PestStan.git",
-                "reference": "750859a911050915cb6e3efbfde30e900ad717bf"
+                "reference": "a18bf927fcff6dbb5ddb749e20b294486587b35c"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/MrPunyapal/PestStan/zipball/750859a911050915cb6e3efbfde30e900ad717bf",
-                "reference": "750859a911050915cb6e3efbfde30e900ad717bf",
+                "url": "https://api.github.com/repos/MrPunyapal/PestStan/zipball/a18bf927fcff6dbb5ddb749e20b294486587b35c",
+                "reference": "a18bf927fcff6dbb5ddb749e20b294486587b35c",
                 "shasum": ""
             },
             "require": {
@@ -9526,9 +9526,9 @@
                 "phpstan/phpstan": "^2.0"
             },
             "require-dev": {
+                "laravel/pao": "^1.0",
                 "laravel/pint": "^1.18",
                 "mrpunyapal/rector-pest": "^0.2.0",
-                "nunomaduro/pao": "^0.1.4",
                 "pestphp/pest": "^3.0 || ^4.0 || ^5.0",
                 "phpstan/extension-installer": "^1.4",
                 "phpstan/phpstan-strict-rules": "^2.0",
@@ -9560,7 +9560,7 @@
             ],
             "support": {
                 "issues": "https://github.com/MrPunyapal/PestStan/issues",
-                "source": "https://github.com/MrPunyapal/PestStan/tree/0.2.10"
+                "source": "https://github.com/MrPunyapal/PestStan/tree/0.2.12"
             },
             "funding": [
                 {
@@ -9568,7 +9568,8 @@
                     "type": "github"
                 }
             ],
-            "time": "2026-05-10T16:55:11+00:00"
+            "abandoned": "https://github.com/pestphp/pest-plugin-phpstan",
+            "time": "2026-07-17T19:10:40+00:00"
         },
         {
             "name": "mrpunyapal/rector-pest",
